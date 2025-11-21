@@ -1,22 +1,14 @@
 "use client";
 
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import {
-	Flame,
-	Minus,
-	PanelLeft,
-	PanelRight,
-	Plus,
-	Square,
-	X,
-} from "lucide-react";
+import { PanelLeft, PanelRight, Plus } from "lucide-react";
+import { ProjectDropdown } from "@/components/features/project";
 import { Tab } from "@/components/features/tabs";
+import { WindowControls } from "@/components/features/window";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useTabs } from "@/hooks/use-tabs";
 import { cn } from "@/lib/utils";
 
 export function TitleBar() {
-	const appWindow = getCurrentWindow();
 	const { tabs, activeTabId, addTab } = useTabs();
 	const {
 		isLeftSidebarOpen,
@@ -25,18 +17,6 @@ export function TitleBar() {
 		toggleLeftSidebar,
 		toggleRightSidebar,
 	} = useSidebar();
-
-	const handleMinimize = () => {
-		appWindow.minimize();
-	};
-
-	const handleMaximize = () => {
-		appWindow.toggleMaximize();
-	};
-
-	const handleClose = () => {
-		appWindow.close();
-	};
 
 	const handleNewTab = () => {
 		addTab({
@@ -51,13 +31,8 @@ export function TitleBar() {
 			data-tauri-drag-region
 			className="h-9 bg-background border-b border-border flex items-center select-none"
 		>
-			{/* Left: App logo and title */}
-			<div className="flex items-center gap-2 px-3 flex-shrink-0">
-				<div className="h-4 w-4 rounded flex items-center justify-center">
-					<Flame className="h-3.5 w-3.5 text-orange-500" />
-				</div>
-				<span className="text-xs font-medium text-foreground">FIRE</span>
-			</div>
+			{/* Left: Project Dropdown */}
+			<ProjectDropdown />
 
 			{/* Center: Tabs + Plus Button */}
 			<div className="flex items-center min-w-0 flex-1">
@@ -117,32 +92,7 @@ export function TitleBar() {
 			</div>
 
 			{/* Right: Window controls */}
-			<div className="flex items-center flex-shrink-0 border-l border-border/50">
-				<button
-					type="button"
-					onClick={handleMinimize}
-					className="h-9 w-11 hover:bg-accent/50 flex items-center justify-center transition-colors"
-					aria-label="Minimize"
-				>
-					<Minus className="h-3.5 w-3.5" />
-				</button>
-				<button
-					type="button"
-					onClick={handleMaximize}
-					className="h-9 w-11 hover:bg-accent/50 flex items-center justify-center transition-colors"
-					aria-label="Maximize"
-				>
-					<Square className="h-3 w-3" />
-				</button>
-				<button
-					type="button"
-					onClick={handleClose}
-					className="h-9 w-11 hover:bg-destructive hover:text-destructive-foreground flex items-center justify-center transition-colors"
-					aria-label="Close"
-				>
-					<X className="h-3.5 w-3.5" />
-				</button>
-			</div>
+			<WindowControls />
 		</div>
 	);
 }

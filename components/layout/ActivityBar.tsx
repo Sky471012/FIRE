@@ -14,6 +14,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { createChildWindow } from "@/lib/window";
 
 export function ActivityBar() {
 	const [activeView, setActiveView] = useState<string>("explorer");
@@ -60,31 +61,43 @@ export function ActivityBar() {
 			{/* Spacer */}
 			<div className="flex-1" />
 
-			{/* Settings Button at Bottom */}
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						type="button"
-						onClick={() => setActiveView("settings")}
-						className={cn(
-							"h-12 w-full flex items-center justify-center transition-colors relative",
-							"hover:bg-accent",
-							activeView === "settings"
-								? "text-foreground bg-accent"
-								: "text-muted-foreground",
-						)}
-						aria-label="Settings"
-					>
-						{activeView === "settings" && (
-							<div className="absolute left-0 w-0.5 h-6 bg-primary" />
-						)}
-						<Settings className="h-5 w-5" />
-					</button>
-				</TooltipTrigger>
-				<TooltipContent side="right" sideOffset={8}>
-					<p className="text-xs">Settings</p>
-				</TooltipContent>
-			</Tooltip>
+		{/* Settings Button at Bottom */}
+		<Tooltip>
+			<TooltipTrigger asChild>
+				<button
+					type="button"
+					onClick={async () => {
+						try {
+							await createChildWindow({
+								label: "settings",
+								title: "Settings",
+								url: "/settings",
+								width: 800,
+								height: 600,
+							});
+						} catch (error) {
+							console.error("Failed to open settings:", error);
+						}
+					}}
+					className={cn(
+						"h-12 w-full flex items-center justify-center transition-colors relative",
+						"hover:bg-accent",
+						activeView === "settings"
+							? "text-foreground bg-accent"
+							: "text-muted-foreground",
+					)}
+					aria-label="Settings"
+				>
+					{activeView === "settings" && (
+						<div className="absolute left-0 w-0.5 h-6 bg-primary" />
+					)}
+					<Settings className="h-5 w-5" />
+				</button>
+			</TooltipTrigger>
+			<TooltipContent side="right" sideOffset={8}>
+				<p className="text-xs">Settings</p>
+			</TooltipContent>
+		</Tooltip>
 		</div>
 	);
 }

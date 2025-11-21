@@ -56,6 +56,8 @@ pub fn run() {
             commands::set_current_project_path,
             // Window management commands
             commands::create_child_window,
+            commands::close_child_window,
+            commands::window_exists,
             // File system commands
             commands::read_directory,
             commands::read_directory_recursive,
@@ -70,7 +72,7 @@ pub fn run() {
             data_load::from_csv,
             data_load::from_excel,
             data_load::from_parquet,
-            data_load::from_netcdf,
+            // data_load::from_netcdf,  // Commented out for faster dev builds
             // File operations commands
             file_operations::create_file,
             file_operations::create_folder,
