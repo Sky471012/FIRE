@@ -133,9 +133,37 @@ pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String
     println!("[DEBUG] from_netcdf called");
     println!("[DEBUG] Input file: {}", file_path);
     println!("[DEBUG] Project path: {}", project_path);
+    let file_name = std::path::Path::new(&file_path)
+        .file_stem()
+        .ok_or("Invalid file path: no file stem")?;
+
+    let file_stem = file_name.to_string_lossy().to_string();
+    println!("[DEBUG] File stem: {}", file_stem);
+
+    let path_dir: PathBuf = std::path::Path::new(&project_path).join("data");
+    println!("[DEBUG] Data directory: {}", path_dir.display());
+
+    std::fs::create_dir_all(path_dir.clone()).map_err(|e| e.to_string())?;
+
+    let db_path = path_dir
+        .join("project_data.db")
+        .to_string_lossy()
+        .to_string();
 
     let _file = netcdf::open(file_path.clone())
         .map_err(|e| format!("Failed to open NetCDF file: {}", e))?;
+
+    let temp_var = _file.variable("name").unwrap();
+    let temp_values: Vec<f32> = temp_var.get_values(..).unwrap();
+
+    let table_name = valid_name(file_stem);
+    let query = format!(
+        "CREATE TABLE IF NOT EXISTS \"{}\" (
+        //define table
+    ) ",
+        table_name
+    );
+    db::execute_query(db_path, query);
 
     println!("[DEBUG] NetCDF file opened successfully");
     Ok(())
