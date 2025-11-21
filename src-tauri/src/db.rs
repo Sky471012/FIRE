@@ -373,3 +373,14 @@ pub fn execute_query(db_path: String, query: String) -> Result<TableData, String
         total_rows,
     })
 }
+
+pub fn execute_statement(db_path: String, statement: String) -> Result<(), String> {
+    let conn = Connection::open(&db_path).map_err(|e| format!("Failed to open database: {}", e))?;
+
+    conn.execute(&statement, [])
+        .map_err(|e| format!("Failed to execute statement: {}", e))?;
+
+    drop(conn);
+
+    Ok(())
+}

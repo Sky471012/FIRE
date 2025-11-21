@@ -26,4 +26,5 @@ duckdb = { version = "1.4.1", features = ["bundled"] }
 regex = "1.12.2"
 calamine = { version = "0.31.0", features = ["chrono"] }
 netcdf = { version = "0.11.1", features = ["static"] }
+once_cell = "1.19"
 

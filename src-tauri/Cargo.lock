@@ -1361,6 +1361,7 @@ dependencies = [
  "calamine",
  "duckdb",
  "netcdf",
+ "once_cell",
  "regex",
  "serde",
  "serde_json",

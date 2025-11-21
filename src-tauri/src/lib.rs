@@ -1,5 +1,5 @@
-mod data_load;
-mod db;
+pub mod data_load;
+pub mod db;
 
 #[tauri::command]
 fn greet(name: &str) -> String {
