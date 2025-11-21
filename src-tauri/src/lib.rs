@@ -1,6 +1,10 @@
+mod chat;
+pub mod commands;
 pub mod data_load;
 pub mod db;
+pub mod file_operations;
 pub mod utils;
+mod venv_extractor;
 
 use utils::logger;
 
@@ -20,13 +24,69 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .manage(commands::AppState::new())
         .invoke_handler(tauri::generate_handler![
             greet,
             logger::log_info,
             logger::log_warn,
             logger::log_error,
             logger::log_debug,
-            logger::get_log_path
+            logger::get_log_path,
+            // Settings commands
+            commands::get_settings,
+            commands::save_settings,
+            commands::update_window_settings,
+            // Workspace commands
+            commands::get_workspace_state,
+            commands::save_workspace_state,
+            commands::get_project_workspace_state,
+            commands::save_project_workspace_state,
+            commands::save_workspace_to_project_path,
+            // Recent projects commands
+            commands::get_recent_projects,
+            commands::add_recent_project,
+            commands::remove_recent_project,
+            commands::clear_recent_projects,
+            // Project management commands
+            commands::is_directory_empty,
+            commands::initialize_project,
+            commands::is_valid_project,
+            commands::get_project_name,
+            commands::get_current_project_path,
+            commands::set_current_project_path,
+            // Window management commands
+            commands::create_child_window,
+            // File system commands
+            commands::read_directory,
+            commands::read_directory_recursive,
+            commands::get_file_info,
+            // Data loader commands
+            commands::ingest_docs_from_url,
+            // Server management commands
+            commands::start_python_server,
+            commands::stop_python_server,
+            commands::is_server_running,
+            // Data load commands (from data_load module)
+            data_load::from_csv,
+            data_load::from_excel,
+            data_load::from_parquet,
+            data_load::from_netcdf,
+            // File operations commands
+            file_operations::create_file,
+            file_operations::create_folder,
+            file_operations::delete_file,
+            file_operations::read_file_content,
+            file_operations::write_file_content,
+            file_operations::is_file_binary,
+            file_operations::delete_folder,
+            file_operations::rename_entry,
+            file_operations::copy_entry,
+            file_operations::move_entry,
+            // Chat commands
+            chat::create_chat_session,
+            chat::get_chat_sessions,
+            chat::get_chat_history,
+            chat::delete_chat_session
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -129,6 +129,7 @@ pub fn from_excel(file_path: String, project_path: String) -> Result<(), String>
     Ok(())
 }
 
+#[tauri::command]
 pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String> {
     let _lock = DB_LOCK
         .lock()
@@ -298,32 +299,10 @@ pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String
         var_data.push(values);
     }
 
-    // Prepare rows for bulk insert
-    let mut rows: Vec<Vec<String>> = Vec::new();
+    println!("[DEBUG] Using DuckDB Appender for fast bulk insert");
 
-    for flat_idx in 0..total_rows {
-        // Calculate multi-dimensional indices
-        let mut indices = vec![0; dim_sizes.len()];
-        let mut remaining = flat_idx;
-
-        for (dim_idx, &dim_size) in dim_sizes.iter().enumerate().rev() {
-            indices[dim_idx] = remaining % dim_size;
-            remaining /= dim_size;
-        }
-
-        // Build row: (dim_0, dim_1, ..., var_0, var_1, ...)
-        let mut row_values: Vec<String> = indices.iter().map(|i| i.to_string()).collect();
-
-        // Add values from each variable
-        for var_values in &var_data {
-            row_values.push(var_values[flat_idx].to_string());
-        }
-
-        rows.push(row_values);
-    }
-
-    // Bulk insert all rows
-    db::bulk_insert_rows(db_path, table_name, columns, rows, 1000)?;
+    // Use DuckDB's Appender API for much faster inserts
+    db::bulk_insert_with_appender(db_path, table_name, &dim_sizes, var_data)?;
 
     println!("[DEBUG] NetCDF import completed successfully");
     Ok(())

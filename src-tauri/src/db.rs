@@ -450,3 +450,122 @@ pub fn bulk_insert_rows(
     println!("[DEBUG] Successfully inserted {} rows", total_rows);
     Ok(())
 }
+
+/// Fast bulk insert using temporary CSV file + DuckDB's optimized CSV reader
+///
+/// This bypasses the slow SQL INSERT statements by:
+/// 1. Writing data to a temporary CSV file
+/// 2. Using DuckDB's native read_csv() which is highly optimized
+/// 3. Cleaning up the temporary file
+///
+/// This is orders of magnitude faster than INSERT statements for large datasets.
+///
+/// # Arguments
+/// * `db_path` - Path to the DuckDB database
+/// * `table_name` - Name of the table to insert into
+/// * `dim_sizes` - Sizes of each dimension (for multi-dimensional data)
+/// * `var_data` - Vector of variable data, where each inner Vec<f64> contains all values for one variable
+pub fn bulk_insert_with_appender(
+    db_path: String,
+    table_name: String,
+    dim_sizes: &[usize],
+    var_data: Vec<Vec<f64>>,
+) -> Result<(), String> {
+    use std::fs::File;
+    use std::io::{BufWriter, Write};
+
+    let total_rows: usize = dim_sizes.iter().product();
+    println!(
+        "[DEBUG] Using temporary CSV for fast bulk insert of {} rows",
+        total_rows
+    );
+
+    let start_time = std::time::Instant::now();
+
+    // Create temporary CSV file
+    let temp_csv_path = std::env::temp_dir().join(format!("netcdf_temp_{}.csv", table_name));
+    println!("[DEBUG] Writing to temporary CSV: {:?}", temp_csv_path);
+
+    let file =
+        File::create(&temp_csv_path).map_err(|e| format!("Failed to create temp CSV: {}", e))?;
+    let mut writer = BufWriter::new(file);
+
+    // Write CSV data (no header needed, we'll use column indices)
+    for flat_idx in 0..total_rows {
+        // Calculate multi-dimensional indices
+        let mut indices = vec![0; dim_sizes.len()];
+        let mut remaining = flat_idx;
+
+        for (dim_idx, &dim_size) in dim_sizes.iter().enumerate().rev() {
+            indices[dim_idx] = remaining % dim_size;
+            remaining /= dim_size;
+        }
+
+        // Write dimension values
+        for (i, &idx) in indices.iter().enumerate() {
+            if i > 0 {
+                write!(writer, ",").map_err(|e| format!("Failed to write CSV: {}", e))?;
+            }
+            write!(writer, "{}", idx).map_err(|e| format!("Failed to write CSV: {}", e))?;
+        }
+
+        // Write variable values
+        for var_values in &var_data {
+            write!(writer, ",{}", var_values[flat_idx])
+                .map_err(|e| format!("Failed to write CSV: {}", e))?;
+        }
+
+        writeln!(writer).map_err(|e| format!("Failed to write CSV: {}", e))?;
+
+        // // Progress logging every 50k rows
+        // if (flat_idx + 1) % 500000 == 0 && flat_idx + 1 < total_rows {
+        //     let elapsed = start_time.elapsed().as_secs_f64();
+        //     let rows_per_sec = (flat_idx + 1) as f64 / elapsed;
+        //     println!(
+        //         "[DEBUG] Written {} / {} rows to CSV ({:.0} rows/sec)",
+        //         flat_idx + 1,
+        //         total_rows,
+        //         rows_per_sec
+        //     );
+        // }
+    }
+
+    writer
+        .flush()
+        .map_err(|e| format!("Failed to flush CSV: {}", e))?;
+    drop(writer);
+
+    let csv_write_time = start_time.elapsed().as_secs_f64();
+    println!(
+        "[DEBUG] CSV write completed in {:.2} seconds",
+        csv_write_time
+    );
+
+    // Use DuckDB's fast CSV reader to load the data
+    dbg!("[DEBUG] Loading CSV into DuckDB using read_csv()");
+    let load_start = std::time::Instant::now();
+
+    let temp_csv_str = temp_csv_path.to_string_lossy().to_string();
+    let insert_query = format!(
+        "INSERT INTO \"{}\" SELECT * FROM read_csv('{}', header=false, auto_detect=true)",
+        table_name,
+        temp_csv_str.replace('\\', "\\\\")
+    );
+
+    execute_statement(db_path, insert_query)?;
+
+    let load_time = load_start.elapsed().as_secs_f64();
+    println!("[DEBUG] DuckDB load completed in {:.2} seconds", load_time);
+
+    std::fs::remove_file(&temp_csv_path)
+        .map_err(|e| format!("Failed to remove temp CSV: {}", e))?;
+
+    let total_time = start_time.elapsed().as_secs_f64();
+    let rows_per_sec = total_rows as f64 / total_time;
+    println!(
+        "[DEBUG] Successfully loaded {} rows in {:.2} seconds ({:.0} rows/sec)",
+        total_rows, total_time, rows_per_sec
+    );
+
+    Ok(())
+}
