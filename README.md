@@ -33,3 +33,39 @@ The global data analytics in education and research market is valued at over ₹
 with rapid growth due to increasing open-data initiatives (NASA, ISRO, ESA, ERA5, etc.). 
 FIRE's addressable market spans data-driven research and AI-assisted education, 
 both expanding rapidly as AI tools become mainstream in scientific workflows.
+
+---
+
+## Features
+
+### Child Dialog Windows
+FIRE supports modal child dialog windows with native OS-level locking behavior. Perfect for settings panels, preferences, and other dialog scenarios.
+
+**Key Features:**
+- 🔒 Modal behavior - parent window locks when child opens
+- 🎯 Clean UI - only close button, no minimize/maximize
+- 🔗 Synchronized movement - child follows parent window state
+- 🚫 Hidden from taskbar - reduces clutter
+
+**Quick Usage:**
+```typescript
+import { createChildWindow } from '@/lib/window';
+
+await createChildWindow({
+  label: 'settings',
+  title: 'Settings',
+  url: '/settings',
+  width: 600,
+  height: 400
+});
+```
+
+**Documentation:**
+- [Quick Start Guide](./CHILD_WINDOWS_README.md)
+- [Setup Checklist](./SETUP_CHECKLIST.md)
+- [Full Documentation](./docs/CHILD_WINDOWS.md)
+- [Architecture Diagrams](./docs/ARCHITECTURE_DIAGRAM.md)
+- [Code Examples](./examples/child-window-usage.tsx)
+
+**Demo:** Run the app and navigate to `/window-demo` to see it in action!
+

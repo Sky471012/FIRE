@@ -56,6 +56,8 @@ pub fn run() {
             commands::set_current_project_path,
             // Window management commands
             commands::create_child_window,
+            commands::close_child_window,
+            commands::window_exists,
             // File system commands
             commands::read_directory,
             commands::read_directory_recursive,

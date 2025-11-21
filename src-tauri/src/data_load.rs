@@ -130,12 +130,6 @@ pub fn from_excel(file_path: String, project_path: String) -> Result<(), String>
 }
 
 #[tauri::command]
-pub fn from_pdf(file_path: String, project_path: String) -> Result<(), String> {
-    
-    Ok(())
-}
-
-#[tauri::command]
 pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String> {
     let _lock = DB_LOCK
         .lock()
