@@ -1,3 +1,11 @@
+"use client";
+
 export default function Home() {
-	return <h1 className="text-3xl font-bold underline">Hello world!</h1>;
+	return (
+		<div className="h-full p-4">
+			<div className="text-muted-foreground text-sm">
+				<p>Editor Area</p>
+			</div>
+		</div>
+	);
 }
