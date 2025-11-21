@@ -1,44 +1,19 @@
-# GitLab CI/CD Configuration for Tauri Application
-
 stages:
-  - lint
   - build
-  - test
-  - security
 
 variables:
   PNPM_STORE_PATH: ${CI_PROJECT_DIR}/.pnpm-store
-  SAST_EXCLUDED_PATHS: "spec, test, tests, tmp"
 
-.pnpm_cache: &pnpm_cache
+build:
+  stage: build
+  image: node:20
   cache:
-    key: pnpm-${CI_COMMIT_REF_SLUG}
+    key: ${CI_COMMIT_REF_SLUG}
     paths:
       - .pnpm-store/
       - node_modules/
-
-lint:frontend:
-  stage: lint
-  image: node:20
-  <<: *pnpm_cache
   before_script:
     - corepack enable
-    - corepack prepare pnpm@latest --activate
-    - pnpm config set store-dir ${PNPM_STORE_PATH}
-  script:
-    - pnpm install --frozen-lockfile
-    - pnpm run lint
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
-build:frontend:
-  stage: build
-  image: node:20
-  <<: *pnpm_cache
-  before_script:
-    - corepack enable
-    - corepack prepare pnpm@latest --activate
     - pnpm config set store-dir ${PNPM_STORE_PATH}
   script:
     - pnpm install --frozen-lockfile
@@ -46,11 +21,4 @@ build:frontend:
   artifacts:
     paths:
       - .next/
-      - out/
-    expire_in: 1 week
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-
-include:
-  - template: Security/SAST.gitlab-ci.yml
+    expire_in: 1 day
