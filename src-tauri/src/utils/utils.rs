@@ -2,20 +2,20 @@ use anyhow::{Context, Result};
 use std::fs;
 use std::path::PathBuf;
 
-/// Get the .gaia directory path in the user's home directory
-pub fn get_gaia_dir() -> Result<PathBuf> {
+/// Get the .fire directory path in the user's home directory
+pub fn get_fire_dir() -> Result<PathBuf> {
     let home_dir = dirs::home_dir().context("Failed to determine home directory")?;
 
-    let gaia_dir = home_dir.join(".gaia");
+    let fire_dir = home_dir.join(".fire");
 
     // Create the directory if it doesn't exist
-    if !gaia_dir.exists() {
-        fs::create_dir_all(&gaia_dir).context("Failed to create .gaia directory")?;
+    if !fire_dir.exists() {
+        fs::create_dir_all(&fire_dir).context("Failed to create .fire directory")?;
     } else {
-        println!(".gaia directory already exists");
+        println!(".fire directory already exists");
     }
 
-    Ok(gaia_dir)
+    Ok(fire_dir)
 }
 
 /// Read a file and return its contents as a String
