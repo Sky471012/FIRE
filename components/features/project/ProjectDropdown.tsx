@@ -6,11 +6,14 @@ import {
 	DropdownMenuContent,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NewProjectButton } from "./NewProjectButton";
 import { OpenProjectButton } from "./OpenProjectButton";
+import { NewProjectButton } from "./NewProjectButton";
 import { RecentProjects } from "./RecentProjects";
+import { useProject } from "@/hooks/use-project";
 
 export function ProjectDropdown() {
+	const { currentProjectName } = useProject();
+
 	return (
 		<div className="flex items-center flex-shrink-0">
 			<DropdownMenu>
@@ -20,7 +23,7 @@ export function ProjectDropdown() {
 						className="h-9 px-3 flex items-center gap-1.5 hover:bg-accent/50 transition-colors text-xs font-medium"
 						aria-label="Project menu"
 					>
-						<span>Project</span>
+						<span>{currentProjectName || "Project"}</span>
 						<ChevronDown className="h-3 w-3" />
 					</button>
 				</DropdownMenuTrigger>
@@ -33,3 +36,4 @@ export function ProjectDropdown() {
 		</div>
 	);
 }
+

@@ -80,7 +80,7 @@ pub fn is_directory_empty(path: String) -> Result<bool, String> {
 }
 
 #[tauri::command]
-pub fn initialize_project(path: String, app_version: String) -> Result<(), String> {
+pub fn initialize_project(path: String) -> Result<(), String> {
     use std::fs;
     use std::path::Path;
 
@@ -113,20 +113,17 @@ pub fn initialize_project(path: String, app_version: String) -> Result<(), Strin
         .unwrap_or("Untitled Project")
         .to_string();
 
-    // Create project.toml file
+    // Create FIRE.toml file with just the name field
     let toml_content = format!(
-        r#"# FIRE Project Configuration
-
-[project]
+        r#"[project]
 name = "{}"
-version = "{}"
 "#,
-        project_name, app_version
+        project_name
     );
 
-    let toml_path = project_path.join("project.toml");
+    let toml_path = project_path.join("FIRE.toml");
     fs::write(&toml_path, toml_content)
-        .map_err(|e| format!("Failed to create project.toml: {}", e))?;
+        .map_err(|e| format!("Failed to create FIRE.toml: {}", e))?;
 
     Ok(())
 }
@@ -141,8 +138,8 @@ pub fn is_valid_project(path: String) -> Result<bool, String> {
         return Ok(false);
     }
 
-    // Check if project.toml exists
-    let toml_path = project_path.join("project.toml");
+    // Check if FIRE.toml exists
+    let toml_path = project_path.join("FIRE.toml");
     Ok(toml_path.exists() && toml_path.is_file())
 }
 
@@ -157,25 +154,25 @@ pub fn get_project_name(path: String) -> Result<String, String> {
         return Err("Project directory does not exist".to_string());
     }
 
-    let toml_path = project_path.join("project.toml");
+    let toml_path = project_path.join("FIRE.toml");
 
     if !toml_path.exists() {
-        return Err("project.toml not found".to_string());
+        return Err("FIRE.toml not found".to_string());
     }
 
     // Read and parse the TOML file
     let toml_content = fs::read_to_string(&toml_path)
-        .map_err(|e| format!("Failed to read project.toml: {}", e))?;
+        .map_err(|e| format!("Failed to read FIRE.toml: {}", e))?;
 
     let toml_value: toml::Value = toml::from_str(&toml_content)
-        .map_err(|e| format!("Failed to parse project.toml: {}", e))?;
+        .map_err(|e| format!("Failed to parse FIRE.toml: {}", e))?;
 
     // Extract project name
     let project_name = toml_value
         .get("project")
         .and_then(|p| p.get("name"))
         .and_then(|n| n.as_str())
-        .ok_or_else(|| "Project name not found in project.toml".to_string())?
+        .ok_or_else(|| "Project name not found in FIRE.toml".to_string())?
         .to_string();
 
     Ok(project_name)
