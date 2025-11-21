@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use super::utils::{get_fire_dir, read_config_file, write_config_file};
+use super::utils::{get_gaia_dir, read_config_file, write_config_file};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowSettings {
@@ -76,8 +76,8 @@ impl Default for Settings {
 impl Settings {
     /// Get the path to the settings file
     fn get_path() -> Result<PathBuf> {
-        let fire_dir = get_fire_dir()?;
-        Ok(fire_dir.join("settings.toml"))
+        let gaia_dir = get_gaia_dir()?;
+        Ok(gaia_dir.join("settings.toml"))
     }
 
     /// Load settings from disk, or return defaults if file doesn't exist

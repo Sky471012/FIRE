@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use super::utils::{get_fire_dir, read_config_file, write_config_file};
+use super::utils::{get_gaia_dir, read_config_file, write_config_file};
 
 const MAX_RECENT_PROJECTS: usize = 20;
 
@@ -29,8 +29,8 @@ impl Default for RecentProjects {
 impl RecentProjects {
     /// Get the path to the recent projects file
     fn get_path() -> Result<PathBuf> {
-        let fire_dir = get_fire_dir()?;
-        Ok(fire_dir.join("recent_projects.json"))
+        let gaia_dir = get_gaia_dir()?;
+        Ok(gaia_dir.join("recent_projects.json"))
     }
 
     /// Load recent projects from disk, or return defaults if file doesn't exist

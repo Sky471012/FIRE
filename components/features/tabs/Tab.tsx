@@ -1,7 +1,6 @@
 "use client";
 
 import { Circle, Pin, X } from "lucide-react";
-import type React from "react";
 import {
 	ContextMenu,
 	ContextMenuContent,
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/context-menu";
 import { type Tab as TabType, useTabs } from "@/hooks/use-tabs";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface TabProps {
 	tab: TabType;

@@ -115,7 +115,7 @@ pub fn initialize_project(path: String, app_version: String) -> Result<(), Strin
 
     // Create project.toml file
     let toml_content = format!(
-        r#"# FIRE Project Configuration
+        r#"# Gaia Project Configuration
 
 [project]
 name = "{}"
