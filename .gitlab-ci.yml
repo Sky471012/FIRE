@@ -1,0 +1,92 @@
+# GitLab CI/CD Configuration
+
+# Global default settings
+default:
+  image: ubuntu:22.04
+
+# Define pipeline stages
+stages:
+  - test
+  - build
+  - security
+
+# Global cache configuration
+variables:
+  CARGO_HOME: ${CI_PROJECT_DIR}/.cargo
+  PNPM_STORE_PATH: ${CI_PROJECT_DIR}/.pnpm-store
+
+# Cache definitions
+.rust_cache: &rust_cache
+  cache:
+    key: rust-${CI_COMMIT_REF_SLUG}
+    paths:
+      - src-tauri/target/
+      - .cargo/
+
+.pnpm_cache: &pnpm_cache
+  cache:
+    key: pnpm-${CI_COMMIT_REF_SLUG}
+    paths:
+      - .pnpm-store/
+      - node_modules/
+
+# Test Backend
+
+test:backend:
+  stage: test
+  image: rust:latest
+  <<: *rust_cache
+  before_script:
+    # Update package lists
+    - apt-get update -qq
+    # Install Tauri system dependencies
+    - apt-get install -y 
+        libwebkit2gtk-4.0-dev 
+        build-essential 
+        curl 
+        wget 
+        libssl-dev 
+        libgtk-3-dev 
+        libayatana-appindicator3-dev 
+        librsvg2-dev
+  script:
+    - cd src-tauri
+    - cargo test --verbose
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+
+# Build Frontend
+build:frontend:
+  stage: build
+  image: node:20
+  <<: *pnpm_cache
+  before_script:
+    # Enable pnpm via corepack
+    - corepack enable
+    - corepack prepare pnpm@latest --activate
+    # Configure pnpm store path
+    - pnpm config set store-dir ${PNPM_STORE_PATH}
+  script:
+    # Install dependencies with frozen lockfile
+    - pnpm install --frozen-lockfile
+    # Run linting
+    - pnpm run lint
+    # Build the Next.js application
+    - pnpm run build
+  artifacts:
+    paths:
+      - .next/
+      - out/
+    expire_in: 1 week
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
+
+# Security (SAST)
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
