@@ -130,14 +130,202 @@ pub fn from_excel(file_path: String, project_path: String) -> Result<(), String>
 }
 
 pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String> {
+    let _lock = DB_LOCK
+        .lock()
+        .map_err(|e| format!("Failed to acquire database lock: {}", e))?;
+
     println!("[DEBUG] from_netcdf called");
     println!("[DEBUG] Input file: {}", file_path);
     println!("[DEBUG] Project path: {}", project_path);
 
-    let _file = netcdf::open(file_path.clone())
+    let file_name = std::path::Path::new(&file_path)
+        .file_stem()
+        .ok_or("Invalid file path: no file stem")?;
+
+    let file_stem = file_name.to_string_lossy().to_string();
+    println!("[DEBUG] File stem: {}", file_stem);
+
+    let path_dir: PathBuf = std::path::Path::new(&project_path).join("data");
+    println!("[DEBUG] Data directory: {}", path_dir.display());
+
+    std::fs::create_dir_all(path_dir.clone()).map_err(|e| e.to_string())?;
+
+    let db_path = path_dir
+        .join("project_data.db")
+        .to_string_lossy()
+        .to_string();
+
+    println!("[DEBUG] Opening NetCDF file");
+    let nc_file = netcdf::open(file_path.clone())
         .map_err(|e| format!("Failed to open NetCDF file: {}", e))?;
 
-    println!("[DEBUG] NetCDF file opened successfully");
+    println!("[DEBUG] Reading dimensions");
+    let dimensions: Vec<_> = nc_file.dimensions().collect();
+    println!(
+        "[DEBUG] Found {} dimensions: {:?}",
+        dimensions.len(),
+        dimensions.iter().map(|d| d.name()).collect::<Vec<_>>()
+    );
+
+    println!("[DEBUG] Reading variables");
+    let variables: Vec<_> = nc_file.variables().collect();
+    println!(
+        "[DEBUG] Found {} variables: {:?}",
+        variables.len(),
+        variables.iter().map(|v| v.name()).collect::<Vec<_>>()
+    );
+
+    // Find variables that have the same dimensions (coordinate system)
+    // Typically this will be the main data variables
+    if variables.is_empty() {
+        return Err("No variables found in NetCDF file".to_string());
+    }
+
+    // Get dimension variable names (coordinate variables) to exclude them
+    let dim_var_names: Vec<String> = dimensions.iter().map(|d| d.name().to_string()).collect();
+    println!(
+        "[DEBUG] Dimension variable names to exclude: {:?}",
+        dim_var_names
+    );
+
+    // Use the first multi-dimensional DATA variable (not coordinate variable) to determine the grid structure
+    let main_vars: Vec<_> = variables
+        .iter()
+        .filter(|v| {
+            let num_dims = v.dimensions().into_iter().count();
+            // Must have multiple dimensions AND not be a coordinate variable
+            num_dims > 1 && !dim_var_names.contains(&v.name().to_string())
+        })
+        .collect();
+
+    if main_vars.is_empty() {
+        return Err(
+            "No multi-dimensional data variables found (only found coordinate variables)"
+                .to_string(),
+        );
+    }
+
+    println!(
+        "[DEBUG] Using variable '{}' as template",
+        main_vars[0].name()
+    );
+
+    // Get the dimension structure from the first data variable
+    let dim_names: Vec<String> = main_vars[0]
+        .dimensions()
+        .into_iter()
+        .map(|d| valid_name(d.name().to_string()))
+        .collect();
+    let dim_sizes: Vec<usize> = main_vars[0]
+        .dimensions()
+        .into_iter()
+        .map(|d| d.len())
+        .collect();
+
+    println!(
+        "[DEBUG] Using dimensions: {:?} with sizes {:?}",
+        dim_names, dim_sizes
+    );
+
+    // Collect all variables with the same dimensions, excluding coordinate variables
+    let compatible_vars: Vec<_> = variables
+        .iter()
+        .filter(|v| {
+            // Exclude coordinate variables (variables with same name as dimensions)
+            if dim_var_names.contains(&v.name().to_string()) {
+                return false;
+            }
+
+            let v_dims: Vec<_> = v.dimensions().into_iter().map(|d| d.name()).collect();
+            let main_dims: Vec<_> = main_vars[0]
+                .dimensions()
+                .into_iter()
+                .map(|d| d.name())
+                .collect();
+            v_dims == main_dims
+        })
+        .collect();
+
+    println!(
+        "[DEBUG] Found {} compatible variables",
+        compatible_vars.len()
+    );
+
+    let table_name = valid_name(file_stem);
+
+    // Build column list: dimensions + all variable names
+    let mut columns = dim_names.clone();
+    for var in &compatible_vars {
+        columns.push(valid_name(var.name().to_string()));
+    }
+
+    println!("[DEBUG] Creating table with columns: {:?}", columns);
+
+    // Create table
+    db::create_table_with_columns(db_path.clone(), table_name.clone(), columns.clone())?;
+
+    // Calculate total number of rows
+    let total_rows: usize = dim_sizes.iter().product();
+    println!("[DEBUG] Will insert {} rows", total_rows);
+
+    // Read all variable data
+    let mut var_data: Vec<Vec<f64>> = Vec::new();
+    for var in &compatible_vars {
+        println!("[DEBUG] Reading variable: {}", var.name());
+
+        // Try different types and convert to f64
+        let values: Vec<f64> = if let Ok(vals) = var.get_values::<f64, _>(..) {
+            vals
+        } else if let Ok(vals) = var.get_values::<f32, _>(..) {
+            vals.into_iter().map(|v| v as f64).collect()
+        } else if let Ok(vals) = var.get_values::<i32, _>(..) {
+            vals.into_iter().map(|v| v as f64).collect()
+        } else if let Ok(vals) = var.get_values::<i16, _>(..) {
+            vals.into_iter().map(|v| v as f64).collect()
+        } else {
+            return Err(format!("Unsupported type for variable {}", var.name()));
+        };
+
+        if values.len() != total_rows {
+            return Err(format!(
+                "Variable {} has {} values but expected {}",
+                var.name(),
+                values.len(),
+                total_rows
+            ));
+        }
+
+        var_data.push(values);
+    }
+
+    // Prepare rows for bulk insert
+    let mut rows: Vec<Vec<String>> = Vec::new();
+
+    for flat_idx in 0..total_rows {
+        // Calculate multi-dimensional indices
+        let mut indices = vec![0; dim_sizes.len()];
+        let mut remaining = flat_idx;
+
+        for (dim_idx, &dim_size) in dim_sizes.iter().enumerate().rev() {
+            indices[dim_idx] = remaining % dim_size;
+            remaining /= dim_size;
+        }
+
+        // Build row: (dim_0, dim_1, ..., var_0, var_1, ...)
+        let mut row_values: Vec<String> = indices.iter().map(|i| i.to_string()).collect();
+
+        // Add values from each variable
+        for var_values in &var_data {
+            row_values.push(var_values[flat_idx].to_string());
+        }
+
+        rows.push(row_values);
+    }
+
+    // Bulk insert all rows
+    db::bulk_insert_rows(db_path, table_name, columns, rows, 1000)?;
+
+    println!("[DEBUG] NetCDF import completed successfully");
     Ok(())
 }
 
@@ -245,7 +433,7 @@ mod tests {
     fn test_from_netcdf() {
         let test_dir = "C:\\USERS\\ARINC\\GAIA_DUMMY1";
         let result = from_netcdf(
-            "C:\\Users\\arinc\\Documents\\code\\mera.nc".to_string(),
+            "C:\\Users\\arinc\\Documents\\code\\sample.nc".to_string(),
             test_dir.to_string(),
         );
         match result {

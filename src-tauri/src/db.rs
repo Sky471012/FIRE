@@ -384,3 +384,69 @@ pub fn execute_statement(db_path: String, statement: String) -> Result<(), Strin
 
     Ok(())
 }
+
+pub fn create_table_with_columns(
+    db_path: String,
+    table_name: String,
+    columns: Vec<String>,
+) -> Result<(), String> {
+    let create_query = format!(
+        "CREATE TABLE IF NOT EXISTS \"{}\" ({})",
+        table_name,
+        columns
+            .iter()
+            .map(|c| format!("\"{}\" DOUBLE", c))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+
+    execute_statement(db_path, create_query)
+}
+
+pub fn bulk_insert_rows(
+    db_path: String,
+    table_name: String,
+    columns: Vec<String>,
+    rows: Vec<Vec<String>>,
+    batch_size: usize,
+) -> Result<(), String> {
+    if rows.is_empty() {
+        return Ok(());
+    }
+
+    let column_list = columns
+        .iter()
+        .map(|c| format!("\"{}\"", c))
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    let total_rows = rows.len();
+    let mut batch_start = 0;
+
+    while batch_start < total_rows {
+        let batch_end = std::cmp::min(batch_start + batch_size, total_rows);
+        let batch = &rows[batch_start..batch_end];
+
+        let values_str = batch
+            .iter()
+            .map(|row| format!("({})", row.join(", ")))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let insert_query = format!(
+            "INSERT INTO \"{}\" ({}) VALUES {}",
+            table_name, column_list, values_str
+        );
+
+        execute_statement(db_path.clone(), insert_query)?;
+
+        batch_start = batch_end;
+
+        if batch_start % 10000 == 0 && batch_start < total_rows {
+            println!("[DEBUG] Inserted {} / {} rows", batch_start, total_rows);
+        }
+    }
+
+    println!("[DEBUG] Successfully inserted {} rows", total_rows);
+    Ok(())
+}
