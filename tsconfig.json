@@ -21,7 +21,10 @@
 		"paths": {
 			"@/*": ["./"],
 			"@/styles/*": ["styles/*"],
-			"@/components/*": ["components/*"]
+			"@/components/*": ["components/*"],
+			"@/lib/*": ["lib/*"],
+			"@/hooks/*": ["hooks/*"],
+			"@/types/*": ["types/*"]
 		},
 		"allowJs": true,
 		"incremental": true,
