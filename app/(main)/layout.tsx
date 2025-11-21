@@ -15,14 +15,39 @@ import {
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { useSidebar } from "@/hooks/use-sidebar";
+import { useWindowState } from "@/hooks/use-window-state";
 
 export default function MainLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	const [isMounted, setIsMounted] = useState(false);
 	const [isTauri, setIsTauri] = useState(false);
+
+	// Prevent hydration mismatch by only rendering after mount
+	useEffect(() => {
+		setIsMounted(true);
+		setIsTauri(typeof window !== "undefined" && window.isTauri);
+	}, []);
+
+	if (!isMounted) {
+		// Return null during SSR to prevent hydration mismatch
+		return null;
+	}
+
+	return <MainLayoutContent isTauri={isTauri}>{children}</MainLayoutContent>;
+}
+
+function MainLayoutContent({
+	children,
+	isTauri,
+}: {
+	children: React.ReactNode;
+	isTauri: boolean;
+}) {
 	const {
 		isLeftSidebarOpen,
 		isRightSidebarOpen,
@@ -36,6 +61,9 @@ export default function MainLayout({
 		lastNonZeroRightSize,
 	} = useSidebar();
 
+	// Initialize window state management for main window
+	useWindowState("main");
+
 	const leftRef = useRef<
 		ImperativePanelHandle & { resize?: (size: number) => void }
 	>(null);
@@ -43,9 +71,6 @@ export default function MainLayout({
 		ImperativePanelHandle & { resize?: (size: number) => void }
 	>(null);
 
-	useEffect(() => {
-		setIsTauri(typeof window !== "undefined" && window.isTauri);
-	}, []);
 
 	// Apply collapse/expand imperatively when state changes
 	useEffect(() => {
@@ -113,10 +138,7 @@ export default function MainLayout({
 								defaultSize={100 - leftSize - rightSize}
 								minSize={30}
 							>
-								<div className="h-full flex flex-col">
-									<main className="flex-1 overflow-hidden">{children}</main>
-									<StatusBar />
-								</div>
+								<main className="h-full overflow-hidden">{children}</main>
 							</ResizablePanel>
 
 							{isRightSidebarOpen && <ResizableHandle withHandle />}
@@ -140,7 +162,9 @@ export default function MainLayout({
 							</ResizablePanel>
 						</ResizablePanelGroup>
 					</div>
+					<StatusBar />
 				</div>
+				<Toaster />
 			</TooltipProvider>
 		</ThemeProvider>
 	);

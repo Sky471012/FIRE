@@ -1,6 +1,7 @@
 // Module declarations
 pub mod data;
 pub mod filesystem;
+pub mod global_settings;
 pub mod projects;
 pub mod server;
 pub mod settings;
@@ -14,6 +15,7 @@ pub use state::AppState;
 // Re-export all command functions
 pub use data::*;
 pub use filesystem::*;
+pub use global_settings::*;
 pub use projects::*;
 pub use server::*;
 pub use settings::*;

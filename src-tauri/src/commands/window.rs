@@ -10,6 +10,7 @@ use tauri::Manager;
 /// - Stays on top of parent
 /// - Hidden from taskbar
 /// - When parent minimizes/closes, child follows
+/// - Loads window state from global_settings.toml
 #[tauri::command]
 pub async fn create_child_window(
     app: tauri::AppHandle,
@@ -20,6 +21,8 @@ pub async fn create_child_window(
     width: f64,
     height: f64,
 ) -> Result<(), String> {
+    use crate::commands::AppState;
+
     // Check if window already exists
     if let Some(window) = app.get_webview_window(&label) {
         window.set_focus().map_err(|e| e.to_string())?;
@@ -30,6 +33,15 @@ pub async fn create_child_window(
     let parent_window = app
         .get_webview_window(&parent_label)
         .ok_or_else(|| format!("Parent window '{}' not found", parent_label))?;
+
+    // Load window settings
+    let app_state = app.state::<AppState>();
+    let window_state = if let Ok(global_settings) = app_state.global_settings.lock() {
+        global_settings.get_window_state(&label)
+    } else {
+        // Fallback to defaults if lock fails
+        crate::utils::global_settings::WindowState::child_default(width as i32, height as i32)
+    };
 
     // Parse the URL
     let webview_url = if url.starts_with("http://") || url.starts_with("https://") {
@@ -44,12 +56,12 @@ pub async fn create_child_window(
     // Create new child window with modal properties
     let child_window = tauri::WebviewWindowBuilder::new(&app, label.clone(), webview_url)
         .title(title)
-        .inner_size(width, height)
+        .inner_size(window_state.width as f64, window_state.height as f64)
+        .position(window_state.pos_x as f64, window_state.pos_y as f64)
         .resizable(true)
         .minimizable(false)
         .maximizable(false)
         .closable(true)
-        .center()
         .focused(true)
         .visible(false) // Start hidden, show after setup
         .decorations(false) // Custom window controls
@@ -82,23 +94,30 @@ pub async fn create_child_window(
 
     // Setup event listeners for parent-child synchronization
     let parent_label_clone = parent_label.clone();
+    let label_clone = label.clone();
     let app_handle = app.clone();
     child_window.on_window_event(move |event| {
-        if let tauri::WindowEvent::CloseRequested { .. } = event {
-            // Re-focus parent window when child closes
-            #[cfg(target_os = "windows")]
-            {
-                use windows::Win32::Foundation::HWND;
-                use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+        match event {
+            tauri::WindowEvent::CloseRequested { .. } => {
+                // Note: Window state is saved by the frontend hook with debouncing
+                // This is just for cleanup and re-focusing parent
 
-                if let Some(parent) = app_handle.get_webview_window(&parent_label_clone) {
-                    if let Ok(parent_hwnd) = parent.hwnd() {
-                        unsafe {
-                            let _ = SetForegroundWindow(HWND(parent_hwnd.0 as *mut _));
+                // Re-focus parent window when child closes
+                #[cfg(target_os = "windows")]
+                {
+                    use windows::Win32::Foundation::HWND;
+                    use windows::Win32::UI::WindowsAndMessaging::SetForegroundWindow;
+
+                    if let Some(parent) = app_handle.get_webview_window(&parent_label_clone) {
+                        if let Ok(parent_hwnd) = parent.hwnd() {
+                            unsafe {
+                                let _ = SetForegroundWindow(HWND(parent_hwnd.0 as *mut _));
+                            }
                         }
                     }
                 }
             }
+            _ => {}
         }
     });
 

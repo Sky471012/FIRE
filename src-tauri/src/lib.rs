@@ -6,6 +6,7 @@ pub mod file_operations;
 pub mod utils;
 mod venv_extractor;
 
+use tauri::Manager;
 use utils::logger;
 
 #[tauri::command]
@@ -25,6 +26,42 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .manage(commands::AppState::new())
+        .setup(|app| {
+            // Setup main window with saved settings
+            if let Some(main_window) = app.get_webview_window("main") {
+                let app_state = app.state::<commands::AppState>();
+
+                // Load window state in a separate scope to drop the mutex guard
+                let window_state = {
+                    let global_settings = app_state.global_settings.lock()
+                        .expect("Failed to lock global settings");
+                    global_settings.get_window_state("main")
+                };
+
+                // Apply window position and size
+                let _ = main_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                    width: window_state.width as u32,
+                    height: window_state.height as u32,
+                }));
+
+                let _ = main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                    x: window_state.pos_x,
+                    y: window_state.pos_y,
+                }));
+
+                // Apply maximized state if present
+                if let Some(maximized) = window_state.maximized {
+                    if maximized {
+                        let _ = main_window.maximize();
+                    }
+                }
+
+                // Show window after applying settings
+                let _ = main_window.show();
+            }
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             greet,
             logger::log_info,
@@ -36,6 +73,11 @@ pub fn run() {
             commands::get_settings,
             commands::save_settings,
             commands::update_window_settings,
+            // Global settings commands
+            commands::get_global_settings,
+            commands::get_window_state,
+            commands::save_window_state,
+            commands::remove_window_state,
             // Workspace commands
             commands::get_workspace_state,
             commands::save_workspace_state,
@@ -56,8 +98,6 @@ pub fn run() {
             commands::set_current_project_path,
             // Window management commands
             commands::create_child_window,
-            commands::close_child_window,
-            commands::window_exists,
             // File system commands
             commands::read_directory,
             commands::read_directory_recursive,
@@ -72,7 +112,7 @@ pub fn run() {
             data_load::from_csv,
             data_load::from_excel,
             data_load::from_parquet,
-            // data_load::from_netcdf,  // Commented out for faster dev builds
+            data_load::from_netcdf,
             // File operations commands
             file_operations::create_file,
             file_operations::create_folder,

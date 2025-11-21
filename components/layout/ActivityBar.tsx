@@ -7,7 +7,6 @@ import {
 	Search,
 	Settings,
 } from "lucide-react";
-import { useState } from "react";
 import {
 	Tooltip,
 	TooltipContent,
@@ -16,8 +15,10 @@ import {
 import { cn } from "@/lib/utils";
 import { createChildWindow } from "@/lib/window";
 
+import { useLayout } from "@/hooks/use-layout";
+
 export function ActivityBar() {
-	const [activeView, setActiveView] = useState<string>("explorer");
+	const { activeView, setActiveView } = useLayout();
 
 	const topButtons = [
 		{ id: "explorer", icon: FolderTree, label: "Data Explorer" },

@@ -8,6 +8,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
+// Re-export types
+export type { WindowState, GlobalSettings, WindowLabel } from "@/types/window-state";
+export { WINDOW_LABELS } from "@/types/window-state";
+
 export interface ChildWindowOptions {
 	/** Unique identifier for the window */
 	label: string;

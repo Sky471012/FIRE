@@ -1,12 +1,14 @@
 use std::process::Child;
 use std::sync::Mutex;
 
+use crate::utils::global_settings::GlobalSettings;
 use crate::utils::recent_projects::RecentProjects;
 use crate::utils::settings::Settings;
 use crate::utils::workspace::WorkspaceState;
 
 pub struct AppState {
     pub settings: Mutex<Settings>,
+    pub global_settings: Mutex<GlobalSettings>,
     pub workspace: Mutex<WorkspaceState>,
     pub recent_projects: Mutex<RecentProjects>,
     pub server_process: Mutex<Option<Child>>,
@@ -19,6 +21,9 @@ impl AppState {
         let _ = crate::utils::logger::log_debug("Loading settings...".to_string());
         let settings = Settings::load();
 
+        let _ = crate::utils::logger::log_debug("Loading global settings...".to_string());
+        let global_settings = GlobalSettings::load();
+
         let _ = crate::utils::logger::log_debug("Loading workspace state...".to_string());
         let workspace = WorkspaceState::load();
 
@@ -29,6 +34,7 @@ impl AppState {
 
         Self {
             settings: Mutex::new(settings),
+            global_settings: Mutex::new(global_settings),
             workspace: Mutex::new(workspace),
             recent_projects: Mutex::new(recent_projects),
             server_process: Mutex::new(None),

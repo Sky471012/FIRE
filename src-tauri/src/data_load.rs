@@ -1,6 +1,6 @@
 use crate::db;
 use calamine::{open_workbook, Reader, Xlsx};
-// use netcdf;  // Commented out for faster dev builds
+use netcdf;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::path::PathBuf;
@@ -131,11 +131,10 @@ pub fn from_excel(file_path: String, project_path: String) -> Result<(), String>
 
 #[tauri::command]
 pub fn from_pdf(file_path: String, project_path: String) -> Result<(), String> {
+
     Ok(())
 }
 
-// NetCDF support commented out for faster dev builds
-/*
 #[tauri::command]
 pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String> {
     let _lock = DB_LOCK
@@ -314,7 +313,6 @@ pub fn from_netcdf(file_path: String, project_path: String) -> Result<(), String
     println!("[DEBUG] NetCDF import completed successfully");
     Ok(())
 }
-*/
 
 #[tauri::command]
 pub fn from_parquet(file_path: String, project_path: String) -> Result<(), String> {
@@ -416,8 +414,6 @@ mod tests {
         }
     }
 
-    // NetCDF test commented out for faster dev builds
-    /*
     #[test]
     fn test_from_netcdf() {
         let test_dir = "C:\\USERS\\ARINC\\GAIA_DUMMY1";
@@ -430,5 +426,4 @@ mod tests {
             Err(e) => println!("from_netcdf: ERROR - {}", e),
         }
     }
-    */
 }
