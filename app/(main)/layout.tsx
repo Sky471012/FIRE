@@ -9,6 +9,7 @@ import { SecondarySideBar } from "@/components/layout/SecondarySideBar";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { TitleBar } from "@/components/layout/TitleBar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ThemeSyncProvider } from "@/components/providers/ThemeSyncProvider";
 import { ChatProvider } from "@/components/providers/ChatProvider";
 import {
 	ResizableHandle,
@@ -105,8 +106,9 @@ function MainLayoutContent({
 			enableSystem
 			disableTransitionOnChange
 		>
-			<ChatProvider>
-				<TooltipProvider>
+			<ThemeSyncProvider>
+				<ChatProvider>
+					<TooltipProvider>
 					<div className="h-screen flex flex-col bg-background">
 						{isTauri && <TitleBar />}
 						<div className="flex flex-1 overflow-hidden">
@@ -168,6 +170,7 @@ function MainLayoutContent({
 				<Toaster />
 			</TooltipProvider>
 			</ChatProvider>
+			</ThemeSyncProvider>
 		</ThemeProvider>
 	);
 }

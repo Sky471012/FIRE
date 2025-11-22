@@ -12,46 +12,80 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { Palette, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 type Category = "general" | "appearance";
 
 export default function SettingsPage() {
 	const { settings, loading, updateGeneralSettings, updateAppearanceSettings } =
 		useSettings();
+	const { theme: currentTheme, setTheme: setNextTheme } = useTheme();
 	const [selectedCategory, setSelectedCategory] = useState<Category>("general");
 	const [userName, setUserName] = useState("");
-	const [theme, setTheme] = useState("system");
-	const [fontSize, setFontSize] = useState(14);
+	const [showStatusBar, setShowStatusBar] = useState(true);
+	const [statusBarRefreshMs, setStatusBarRefreshMs] = useState("2000");
+	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+	const statusBarDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Update local state when settings are loaded
 	useEffect(() => {
 		if (settings) {
 			setUserName(settings.general.user_name);
-			setTheme(settings.appearance.theme);
-			setFontSize(settings.appearance.font_size);
+			setShowStatusBar(settings.appearance.show_status_bar);
+			setStatusBarRefreshMs(settings.appearance.status_bar_refresh_ms.toString());
 		}
 	}, [settings]);
 
-	const handleUserNameChange = async (value: string) => {
+	const handleUserNameChange = useCallback((value: string) => {
 		setUserName(value);
-		try {
-			await updateGeneralSettings(value);
-			toast.success("Name updated successfully");
-		} catch (error) {
-			toast.error("Failed to update name");
-			console.error(error);
+
+		// Clear existing timer
+		if (debounceTimerRef.current) {
+			clearTimeout(debounceTimerRef.current);
 		}
-	};
+
+		// Set new timer to save after 500ms of no typing
+		debounceTimerRef.current = setTimeout(async () => {
+			try {
+				await updateGeneralSettings(value);
+				toast.success("Name updated successfully");
+			} catch (error) {
+				toast.error("Failed to update name");
+				console.error(error);
+			}
+		}, 500);
+	}, [updateGeneralSettings]);
+
+	// Cleanup timers on unmount
+	useEffect(() => {
+		return () => {
+			if (debounceTimerRef.current) {
+				clearTimeout(debounceTimerRef.current);
+			}
+			if (statusBarDebounceRef.current) {
+				clearTimeout(statusBarDebounceRef.current);
+			}
+		};
+	}, []);
 
 	const handleThemeChange = async (value: string) => {
-		setTheme(value);
+		// Apply theme immediately in the UI
+		setNextTheme(value);
+
 		try {
-			await updateAppearanceSettings(value, fontSize);
+			// Save to backend with all appearance settings
+			await updateAppearanceSettings(
+				value,
+				settings?.appearance.font_size || 14,
+				settings?.appearance.show_status_bar ?? true,
+				settings?.appearance.status_bar_refresh_ms || 2000
+			);
 			toast.success("Theme updated successfully");
 		} catch (error) {
 			toast.error("Failed to update theme");
@@ -59,16 +93,52 @@ export default function SettingsPage() {
 		}
 	};
 
-	const handleFontSizeChange = async (value: string) => {
-		const size = Number.parseInt(value, 10);
-		setFontSize(size);
+	const handleShowStatusBarChange = async (value: boolean) => {
+		setShowStatusBar(value);
+
 		try {
-			await updateAppearanceSettings(theme, size);
-			toast.success("Font size updated successfully");
+			await updateAppearanceSettings(
+				settings?.appearance.theme || "system",
+				settings?.appearance.font_size || 14,
+				value,
+				settings?.appearance.status_bar_refresh_ms || 2000
+			);
+			toast.success("Status bar setting updated");
 		} catch (error) {
-			toast.error("Failed to update font size");
+			toast.error("Failed to update status bar setting");
 			console.error(error);
 		}
+	};
+
+	const handleStatusBarRefreshChange = (value: string) => {
+		setStatusBarRefreshMs(value);
+
+		// Clear existing timer
+		if (statusBarDebounceRef.current) {
+			clearTimeout(statusBarDebounceRef.current);
+		}
+
+		// Set new timer to save after 500ms of no typing
+		statusBarDebounceRef.current = setTimeout(async () => {
+			const numValue = Number.parseInt(value);
+			if (isNaN(numValue) || numValue < 100) {
+				toast.error("Refresh interval must be at least 100ms");
+				return;
+			}
+
+			try {
+				await updateAppearanceSettings(
+					settings?.appearance.theme || "system",
+					settings?.appearance.font_size || 14,
+					settings?.appearance.show_status_bar ?? true,
+					numValue
+				);
+				toast.success("Status bar refresh interval updated");
+			} catch (error) {
+				toast.error("Failed to update refresh interval");
+				console.error(error);
+			}
+		}, 500);
 	};
 
 	const categories = [
@@ -89,7 +159,7 @@ export default function SettingsPage() {
 			{/* Title Bar for Child Window */}
 			<div
 				data-tauri-drag-region
-				className="flex items-center justify-between h-9 bg-accent/10 border-b border-border/50 px-3"
+				className="flex items-center justify-between h-9 bg-accent/10 border-b border-border/50 pl-3"
 			>
 				<div className="flex items-center gap-2">
 					<span className="text-sm font-medium">Settings</span>
@@ -179,7 +249,7 @@ export default function SettingsPage() {
 										<div className="space-y-6">
 											<div className="space-y-2">
 												<Label htmlFor="theme">Theme</Label>
-												<Select value={theme} onValueChange={handleThemeChange}>
+												<Select value={currentTheme} onValueChange={handleThemeChange}>
 													<SelectTrigger id="theme" className="max-w-md">
 														<SelectValue placeholder="Select theme" />
 													</SelectTrigger>
@@ -194,26 +264,50 @@ export default function SettingsPage() {
 												</p>
 											</div>
 
-											<div className="space-y-2">
-												<Label htmlFor="font-size">Font Size</Label>
-												<Select
-													value={fontSize.toString()}
-													onValueChange={handleFontSizeChange}
-												>
-													<SelectTrigger id="font-size" className="max-w-md">
-														<SelectValue placeholder="Select font size" />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectItem value="12">12px</SelectItem>
-														<SelectItem value="14">14px</SelectItem>
-														<SelectItem value="16">16px</SelectItem>
-														<SelectItem value="18">18px</SelectItem>
-														<SelectItem value="20">20px</SelectItem>
-													</SelectContent>
-												</Select>
-												<p className="text-xs text-muted-foreground">
-													Adjust the default font size.
-												</p>
+											<Separator />
+
+											<div className="space-y-4">
+												<div>
+													<h3 className="text-lg font-semibold mb-1">Status Bar</h3>
+													<p className="text-sm text-muted-foreground">
+														Configure the status bar display and refresh rate
+													</p>
+												</div>
+
+												<div className="flex items-center justify-between max-w-md">
+													<div className="space-y-0.5">
+														<Label htmlFor="show-status-bar">Show Status Bar</Label>
+														<p className="text-xs text-muted-foreground">
+															Display the status bar at the bottom of the window
+														</p>
+													</div>
+													<Switch
+														id="show-status-bar"
+														checked={showStatusBar}
+														onCheckedChange={handleShowStatusBarChange}
+													/>
+												</div>
+
+												{showStatusBar && (
+													<div className="space-y-2">
+														<Label htmlFor="refresh-interval">
+															Refresh Interval (milliseconds)
+														</Label>
+														<Input
+															id="refresh-interval"
+															type="number"
+															min="100"
+															step="100"
+															placeholder="2000"
+															value={statusBarRefreshMs}
+															onChange={(e) => handleStatusBarRefreshChange(e.target.value)}
+															className="max-w-md"
+														/>
+														<p className="text-xs text-muted-foreground">
+															How often to update CPU and RAM usage (minimum 100ms).
+														</p>
+													</div>
+												)}
 											</div>
 										</div>
 									</div>

@@ -7,6 +7,7 @@ pub mod projects;
 pub mod server;
 pub mod settings;
 pub mod state;
+pub mod system;
 pub mod window;
 pub mod workspace;
 
@@ -21,5 +22,6 @@ pub use global_settings::*;
 pub use projects::*;
 pub use server::*;
 pub use settings::*;
+pub use system::*;
 pub use window::*;
 pub use workspace::*;

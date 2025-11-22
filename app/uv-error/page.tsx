@@ -24,7 +24,7 @@ export default function UvErrorPage() {
 			{/* Title Bar for Child Window */}
 			<div
 				data-tauri-drag-region
-				className="flex items-center justify-between h-9 bg-destructive/10 border-b border-destructive/20 px-3"
+				className="flex items-center justify-between h-9 bg-destructive/10 border-b border-destructive/20 pl-3"
 			>
 				<div className="flex items-center gap-2">
 					<AlertCircle className="h-4 w-4 text-destructive" />

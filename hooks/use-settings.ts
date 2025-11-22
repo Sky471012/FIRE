@@ -10,6 +10,8 @@ export interface GeneralSettings {
 export interface AppearanceSettings {
 	theme: string;
 	font_size: number;
+	show_status_bar: boolean;
+	status_bar_refresh_ms: number;
 }
 
 export interface GlobalSettings {
@@ -29,7 +31,11 @@ export function useSettings() {
 
 	const loadSettings = useCallback(async () => {
 		try {
-			setLoading(true);
+			// Don't show loading state when polling/refreshing
+			const isInitialLoad = settings === null;
+			if (isInitialLoad) {
+				setLoading(true);
+			}
 			setError(null);
 			const result = await invoke<GlobalSettings>("get_global_settings");
 			setSettings(result);
@@ -39,7 +45,7 @@ export function useSettings() {
 		} finally {
 			setLoading(false);
 		}
-	}, []);
+	}, [settings]);
 
 	const updateGeneralSettings = useCallback(async (userName: string) => {
 		try {
@@ -60,15 +66,30 @@ export function useSettings() {
 	}, []);
 
 	const updateAppearanceSettings = useCallback(
-		async (theme: string, fontSize: number) => {
+		async (
+			theme: string,
+			fontSize: number,
+			showStatusBar: boolean,
+			statusBarRefreshMs: number,
+		) => {
 			try {
-				await invoke("update_appearance_settings", { theme, fontSize });
+				await invoke("update_appearance_settings", {
+					theme,
+					fontSize,
+					showStatusBar,
+					statusBarRefreshMs,
+				});
 				// Update local state
 				setSettings((prev) =>
 					prev
 						? {
 								...prev,
-								appearance: { theme, font_size: fontSize },
+								appearance: {
+									theme,
+									font_size: fontSize,
+									show_status_bar: showStatusBar,
+									status_bar_refresh_ms: statusBarRefreshMs,
+								},
 							}
 						: null,
 				);

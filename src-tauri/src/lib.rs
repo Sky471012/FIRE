@@ -27,6 +27,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .manage(commands::AppState::new())
+        .manage(commands::system::SystemState::new())
         .setup(|app| {
             let app_state = app.state::<commands::AppState>();
 
@@ -200,7 +201,9 @@ pub fn run() {
             chat::create_chat_session,
             chat::get_chat_sessions,
             chat::get_chat_history,
-            chat::delete_chat_session
+            chat::delete_chat_session,
+            // System commands
+            commands::get_system_stats
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -78,6 +78,8 @@ pub fn update_appearance_settings(
     state: State<AppState>,
     theme: String,
     font_size: u32,
+    show_status_bar: bool,
+    status_bar_refresh_ms: u32,
 ) -> Result<(), String> {
     let mut settings = state
         .global_settings
@@ -86,6 +88,8 @@ pub fn update_appearance_settings(
 
     settings.appearance.theme = theme;
     settings.appearance.font_size = font_size;
+    settings.appearance.show_status_bar = show_status_bar;
+    settings.appearance.status_bar_refresh_ms = status_bar_refresh_ms;
 
     settings
         .save()

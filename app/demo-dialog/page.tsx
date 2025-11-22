@@ -8,7 +8,7 @@ export default function DemoDialogPage() {
 			{/* Title Bar for Child Window */}
 			<div
 				data-tauri-drag-region
-				className="flex items-center justify-between h-9 bg-accent/10 border-b border-border/50 px-3"
+				className="flex items-center justify-between h-9 bg-accent/10 border-b border-border/50 pl-3"
 			>
 				<div className="flex items-center gap-2">
 					<span className="text-sm font-medium">Custom Dialog</span>

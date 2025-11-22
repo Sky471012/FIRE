@@ -3,6 +3,7 @@
 import "@/styles/globals.css";
 import type * as React from "react";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ThemeSyncProvider } from "@/components/providers/ThemeSyncProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useWindowState } from "@/hooks/use-window-state";
 
@@ -27,7 +28,9 @@ export default function DemoDialogLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<DemoDialogContent>{children}</DemoDialogContent>
+					<ThemeSyncProvider>
+						<DemoDialogContent>{children}</DemoDialogContent>
+					</ThemeSyncProvider>
 				</ThemeProvider>
 			</body>
 		</html>

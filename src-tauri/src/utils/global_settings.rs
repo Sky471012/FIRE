@@ -61,6 +61,10 @@ pub struct AppearanceSettings {
     pub theme: String,
     #[serde(default = "default_font_size")]
     pub font_size: u32,
+    #[serde(default = "default_show_status_bar")]
+    pub show_status_bar: bool,
+    #[serde(default = "default_status_bar_refresh_ms")]
+    pub status_bar_refresh_ms: u32,
 }
 
 fn default_theme() -> String {
@@ -71,11 +75,21 @@ fn default_font_size() -> u32 {
     14
 }
 
+fn default_show_status_bar() -> bool {
+    true
+}
+
+fn default_status_bar_refresh_ms() -> u32 {
+    2000 // 2 seconds default
+}
+
 impl Default for AppearanceSettings {
     fn default() -> Self {
         Self {
             theme: default_theme(),
             font_size: default_font_size(),
+            show_status_bar: default_show_status_bar(),
+            status_bar_refresh_ms: default_status_bar_refresh_ms(),
         }
     }
 }

@@ -3,6 +3,7 @@
 import "@/styles/globals.css";
 import type * as React from "react";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ThemeSyncProvider } from "@/components/providers/ThemeSyncProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { useWindowState } from "@/hooks/use-window-state";
@@ -33,7 +34,9 @@ export default function SettingsLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					<SettingsContent>{children}</SettingsContent>
+					<ThemeSyncProvider>
+						<SettingsContent>{children}</SettingsContent>
+					</ThemeSyncProvider>
 				</ThemeProvider>
 			</body>
 		</html>

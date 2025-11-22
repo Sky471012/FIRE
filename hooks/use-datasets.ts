@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useState, useCallback } from "react";
+import { toast } from "sonner";
 
 export interface TableInfo {
 	name: string;
@@ -38,6 +39,7 @@ export function useDatasets() {
 
 	const importDataset = useCallback(async (projectPath: string) => {
 		setIsImporting(true);
+		let toastId: string | number | undefined;
 		try {
 			// Open file dialog with filters for supported file types
 			const selectedFile = await open({
@@ -75,8 +77,14 @@ export function useDatasets() {
 			// Determine file type and call appropriate import function
 			const filePath = selectedFile as string;
 			const extension = filePath.split(".").pop()?.toLowerCase();
+			const fileName = filePath.split(/[\\/]/).pop() || "file";
 
 			console.log("Importing file:", filePath, "with extension:", extension);
+
+			// Show loading toast
+			toastId = toast.loading(`Importing ${fileName}...`, {
+				description: "Please wait while the dataset is being loaded",
+			});
 
 			switch (extension) {
 				case "csv":
@@ -112,13 +120,102 @@ export function useDatasets() {
 			await loadTables(projectPath);
 
 			console.log("Dataset imported successfully");
+
+			// Show success toast
+			toast.success("Dataset imported successfully", {
+				id: toastId,
+				description: `${fileName} has been added to your project`,
+			});
 		} catch (err) {
 			console.error("Failed to import dataset:", err);
-			setError(err instanceof Error ? err.message : String(err));
+			const errorMessage = err instanceof Error ? err.message : String(err);
+			setError(errorMessage);
+
+			// Show error toast
+			toast.error("Failed to import dataset", {
+				id: toastId,
+				description: errorMessage,
+			});
 		} finally {
 			setIsImporting(false);
 		}
 	}, [loadTables]);
+
+	const ingestFromUrl = useCallback(
+		async (
+			projectPath: string,
+			url: string,
+			mode: "static" | "dynamic",
+			maxDepth: number,
+		) => {
+			setIsImporting(true);
+			setError(null);
+
+			// Show loading toast
+			const toastId = toast.loading("Ingesting data from URL...", {
+				description: `Processing ${url}`,
+			});
+
+			try {
+				// Get the data path for the project
+				const dataPath = `${projectPath}/data`;
+
+				// Call the Python FastAPI /docs/ingest endpoint
+				const response = await fetch(
+					"http://localhost:8001/docs/ingest?" +
+						new URLSearchParams({
+							url,
+							data_path: dataPath,
+							mode,
+							max_depth: maxDepth.toString(),
+							max_workers: "10",
+							auto_embed: "true",
+							model_name: "sentence-transformers/all-MiniLM-L6-v2",
+						}),
+					{
+						method: "POST",
+					},
+				);
+
+				if (!response.ok) {
+					const errorData = await response.json().catch(() => ({}));
+					throw new Error(
+						errorData.detail || `HTTP error! status: ${response.status}`,
+					);
+				}
+
+				const result = await response.json();
+				console.log("URL ingestion result:", result);
+
+				// Reload tables after successful ingestion
+				await loadTables(projectPath);
+
+				// Show success toast
+				toast.success("Data ingested successfully", {
+					id: toastId,
+					description: `Content from ${url} has been added to your project`,
+				});
+
+				return result;
+			} catch (err) {
+				console.error("Failed to ingest from URL:", err);
+				const errorMessage =
+					err instanceof Error ? err.message : String(err);
+				setError(errorMessage);
+
+				// Show error toast
+				toast.error("Failed to ingest data from URL", {
+					id: toastId,
+					description: errorMessage,
+				});
+
+				throw err;
+			} finally {
+				setIsImporting(false);
+			}
+		},
+		[loadTables],
+	);
 
 	return {
 		tables,
@@ -127,5 +224,6 @@ export function useDatasets() {
 		error,
 		loadTables,
 		importDataset,
+		ingestFromUrl,
 	};
 }
