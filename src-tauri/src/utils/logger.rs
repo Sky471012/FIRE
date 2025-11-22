@@ -12,7 +12,7 @@ pub fn init_logger() -> Result<String, String> {
     let home_dir = dirs::home_dir()
         .ok_or_else(|| "Could not find home directory".to_string())?;
 
-    let log_dir = home_dir.join(".tire").join("temp");
+    let log_dir = home_dir.join(".fire").join("temp");
 
     // Create directory if it doesn't exist
     fs::create_dir_all(&log_dir)

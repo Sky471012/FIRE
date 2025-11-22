@@ -113,16 +113,21 @@ function MainLayoutContent({
 							{isTauri && <TitleBar />}
 							<div className="flex flex-1 overflow-hidden">
 								<ActivityBar />
-								<ResizablePanelGroup direction="horizontal" className="flex-1">
+								<ResizablePanelGroup 
+									direction="horizontal" 
+									className="flex-1"
+									autoSaveId="main-layout"
+								>
 									{/* Left Sidebar Panel */}
 									{isLeftSidebarOpen && (
 										<>
 											<ResizablePanel
 												ref={leftRef}
 												id="primary-sidebar"
-												defaultSize={leftSize}
+												order={1}
 												minSize={10}
 												maxSize={40}
+												defaultSize={leftSize}
 												collapsible
 												collapsedSize={0}
 												onResize={(size) => {
@@ -141,7 +146,7 @@ function MainLayoutContent({
 									{/* Main Content Panel */}
 									<ResizablePanel
 										id="content"
-										defaultSize={100 - leftSize - rightSize}
+										order={2}
 										minSize={30}
 									>
 										<main className="h-full overflow-hidden">{children}</main>
@@ -155,9 +160,10 @@ function MainLayoutContent({
 											<ResizablePanel
 												ref={rightRef}
 												id="secondary-sidebar"
-												defaultSize={rightSize}
+												order={3}
 												minSize={10}
 												maxSize={40}
+												defaultSize={rightSize}
 												collapsible
 												collapsedSize={0}
 												onResize={(size) => {

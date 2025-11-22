@@ -1,4 +1,4 @@
-# TIRE - Turbo Integrated Research Environment
+# FIRE - Fast Integrated Research Environment
 
 Today, research and scientific data are scattered across countless disconnected platforms - 
 NASA, ISRO, NOAA, Kaggle, ResearchGate, and more. 
@@ -10,14 +10,14 @@ There’s no single, unified workspace where users can easily query, visualize,
 and understand diverse datasets using natural language. 
 In short, scientific discovery is being slowed down by the complexity of data, not by a lack of curiosity.
 
-TIRE aims to change that.
+FIRE aims to change that.
 An AI-powered platform that lets users talk to their data. 
-TIRE integrates open scientific datasets from sources like NASA and ISRO, 
+FIRE integrates open scientific datasets from sources like NASA and ISRO, 
 helps the users process them intuitively using data processing chains, 
 and allows users to explore insights through conversational queries. 
 At its core, 
 
-TIRE combines: 
+FIRE combines: 
 - LangGraph based AI Agent Flow for reasoning and task orchestration 
 - DuckDB with spatial extensions for structured and geospatial data handling 
 - A RAG (Retrieval-Augmented Generation) pipeline using FAISS for intelligent data retrieval 
@@ -31,7 +31,7 @@ Our target audience includes:
 
 The global data analytics in education and research market is valued at over ₹26000 Crores, 
 with rapid growth due to increasing open-data initiatives (NASA, ISRO, ESA, ERA5, etc.). 
-TIRE's addressable market spans data-driven research and AI-assisted education, 
+FIRE's addressable market spans data-driven research and AI-assisted education, 
 both expanding rapidly as AI tools become mainstream in scientific workflows.
 
 ---
@@ -39,7 +39,7 @@ both expanding rapidly as AI tools become mainstream in scientific workflows.
 ## Features
 
 ### Child Dialog Windows
-TIRE supports modal child dialog windows with native OS-level locking behavior. Perfect for settings panels, preferences, and other dialog scenarios.
+FIRE supports modal child dialog windows with native OS-level locking behavior. Perfect for settings panels, preferences, and other dialog scenarios.
 
 **Key Features:**
 - 🔒 Modal behavior - parent window locks when child opens

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use super::utils::{get_tire_dir, read_config_file, write_config_file};
+use super::utils::{get_fire_dir, read_config_file, write_config_file};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WindowState {
@@ -150,8 +150,8 @@ impl Default for GlobalSettings {
 impl GlobalSettings {
     /// Get the path to the global_settings.toml file
     fn get_path() -> Result<PathBuf> {
-        let tire_dir = get_tire_dir()?;
-        Ok(tire_dir.join("global_settings.toml"))
+        let fire_dir = get_fire_dir()?;
+        Ok(fire_dir.join("global_settings.toml"))
     }
 
     /// Load global settings from disk, or return defaults if file doesn't exist

@@ -4,14 +4,14 @@
  * This demonstrates how the global window state management system works.
  *
  * Key Features:
- * 1. Each window (main, settings, demo-dialog) has its own state saved to ~/.tire/global_settings.toml
+ * 1. Each window (main, settings, demo-dialog) has its own state saved to ~/.fire/global_settings.toml
  * 2. Window state includes: theme, position (x, y), size (width, height), and maximized state
  * 3. State is debounced (500ms) to avoid excessive disk writes
  * 4. Windows start invisible and become visible after settings are applied
  * 5. Child windows don't have a maximized property
  *
  * File Structure:
- * ~/.tire/global_settings.toml
+ * ~/.fire/global_settings.toml
  *
  * Example Contents:
  * [window.main]

@@ -329,7 +329,7 @@ export default function SettingsPage() {
 										<div>
 											<h2 className="text-2xl font-bold">Appearance</h2>
 											<p className="text-sm text-muted-foreground">
-												Customize how TIRE looks on your device
+												Customize how FIRE looks on your device
 											</p>
 										</div>
 

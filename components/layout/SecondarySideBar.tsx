@@ -106,9 +106,9 @@ export function SecondarySideBar() {
 
 					<TabsContent value="info" className="p-3 m-0">
 						<Card className="p-3">
-							<h3 className="font-semibold text-xs mb-2">About TIRE</h3>
+							<h3 className="font-semibold text-xs mb-2">About FIRE</h3>
 							<p className="text-xs text-muted-foreground leading-relaxed">
-								Turbo Integrated Research Environment - Your powerful data
+								Fast Integrated Research Environment - Your powerful data
 								analysis platform
 							</p>
 						</Card>

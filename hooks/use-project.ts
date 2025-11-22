@@ -50,7 +50,7 @@ export function useProject() {
 			// Validate project
 			const isValid = await invoke<boolean>("is_valid_project", { path });
 			if (!isValid) {
-				throw new Error("Selected folder does not contain a TIRE.toml file");
+				throw new Error("Selected folder does not contain a FIRE.toml file");
 			}
 
 			// Get project name

@@ -298,7 +298,7 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 			>
 				<DialogHeader>
 					<DialogTitle>
-						{mode === "login" && "Login to TIRE"}
+						{mode === "login" && "Login to FIRE"}
 						{mode === "signup" && "Create Account"}
 						{mode === "confirm" && "Confirm Account"}
 						{mode === "forgot-password" && "Reset Password"}
@@ -306,7 +306,7 @@ export function AuthDialog({ open, onOpenChange, onSuccess }: AuthDialogProps) {
 					</DialogTitle>
 					<DialogDescription>
 						{mode === "login" && "Sign in to access cloud features"}
-						{mode === "signup" && "Create a new TIRE account"}
+						{mode === "signup" && "Create a new FIRE account"}
 						{mode === "confirm" && "Enter the confirmation code sent to your email"}
 						{mode === "forgot-password" && "Enter your username to receive a password reset code"}
 						{mode === "reset-password" && "Enter the code from your email and your new password"}

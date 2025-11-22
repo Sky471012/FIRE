@@ -68,7 +68,7 @@ impl Drop for AppState {
                         #[cfg(target_os = "windows")]
                         {
                             use std::process::Command;
-                            // Use taskkill to ensure the entire process tree is killed
+                            // Use taskkill to ensure the enfire process tree is killed
                             let _ = Command::new("taskkill")
                                 .args(["/F", "/T", "/PID", &pid.to_string()])
                                 .output();

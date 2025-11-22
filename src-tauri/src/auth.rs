@@ -10,7 +10,7 @@ use crate::utils::logger;
 
 // Constants - Replace with your actual values
 const CLIENT_ID: &str = "40jjknacfirb8lccv2d8k60afr";
-const DYNAMODB_TABLE: &str = "TireTransfers";
+const DYNAMODB_TABLE: &str = "FireTransfers";
 const AWS_REGION: &str = "ap-south-1";
 
 // AWS Credentials for DynamoDB access
@@ -30,15 +30,15 @@ fn get_credentials_path() -> Result<PathBuf, String> {
     let home_dir = dirs::home_dir()
         .ok_or("Could not determine home directory")?;
     
-    let tire_dir = home_dir.join(".tire");
+    let fire_dir = home_dir.join(".fire");
     
-    // Create .tire directory if it doesn't exist
-    if !tire_dir.exists() {
-        fs::create_dir_all(&tire_dir)
-            .map_err(|e| format!("Failed to create .tire directory: {}", e))?;
+    // Create .fire directory if it doesn't exist
+    if !fire_dir.exists() {
+        fs::create_dir_all(&fire_dir)
+            .map_err(|e| format!("Failed to create .fire directory: {}", e))?;
     }
     
-    Ok(tire_dir.join(".credentials"))
+    Ok(fire_dir.join(".credentials"))
 }
 
 /// Store credentials to encrypted file

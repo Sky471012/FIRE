@@ -55,7 +55,7 @@ const parseMessageContent = (content: string): ParsedContent => {
       };
     }
     
-    // Check if the entire content IS a visualization spec
+    // Check if the enfire content IS a visualization spec
     if (parsed.sql && parsed.plot_type && parsed.x && parsed.y) {
       return {
         textContent: '',

@@ -223,7 +223,7 @@ export function WelcomePage() {
 								<div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden border border-primary/10">
 									<Image
 										src="/icon.png"
-										alt="TIRE Icon"
+										alt="FIRE Icon"
 										width={56}
 										height={56}
 										className="object-contain"
@@ -233,10 +233,10 @@ export function WelcomePage() {
 							<h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
 								{settings?.general.user_name
 									? `Welcome ${settings.general.user_name}`
-									: "Welcome to TIRE"}
+									: "Welcome to FIRE"}
 							</h1>
 							<p className="text-lg text-muted-foreground">
-								Turbo Integrated Research Environment
+								Fast Integrated Research Environment
 							</p>
 						</div>
 

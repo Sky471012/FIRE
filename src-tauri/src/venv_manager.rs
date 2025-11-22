@@ -3,7 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-use crate::utils::utils::get_tire_dir;
+use crate::utils::utils::get_fire_dir;
 use crate::utils::logger::{internal_log_info, internal_log_error, internal_log_debug};
 
 /// Show error dialog for UV installation requirement
@@ -57,8 +57,8 @@ fn create_uv_error_dialog(app_handle: &tauri::AppHandle) -> Result<()> {
 
 /// Get the path to the pyproject.toml file
 fn get_pyproject_path() -> Result<PathBuf> {
-    let tire_dir = get_tire_dir()?;
-    Ok(tire_dir.join("pyproject.toml"))
+    let fire_dir = get_fire_dir()?;
+    Ok(fire_dir.join("pyproject.toml"))
 }
 
 /// Get the pyproject.toml content
@@ -104,7 +104,7 @@ fn ensure_pyproject_file() -> Result<()> {
     let pyproject_path = get_pyproject_path()?;
 
     if !pyproject_path.exists() {
-        internal_log_info("Creating pyproject.toml in ~/.tire/");
+        internal_log_info("Creating pyproject.toml in ~/.fire/");
         fs::write(&pyproject_path, get_pyproject_content())
             .context("Failed to write pyproject.toml")?;
         internal_log_info(&format!("✓ Created pyproject.toml at {:?}", pyproject_path));
@@ -117,21 +117,21 @@ fn ensure_pyproject_file() -> Result<()> {
 
 /// Check if the venv directory exists
 fn venv_exists() -> Result<bool> {
-    let tire_dir = get_tire_dir()?;
-    let venv_dir = tire_dir.join(".venv");
+    let fire_dir = get_fire_dir()?;
+    let venv_dir = fire_dir.join(".venv");
     Ok(venv_dir.exists() && venv_dir.is_dir())
 }
 
-/// Run uv sync command in the .tire directory
+/// Run uv sync command in the .fire directory
 fn run_uv_sync() -> Result<()> {
-    let tire_dir = get_tire_dir()?;
+    let fire_dir = get_fire_dir()?;
 
-    internal_log_info(&format!("Running 'uv sync' in {:?}", tire_dir));
+    internal_log_info(&format!("Running 'uv sync' in {:?}", fire_dir));
     internal_log_info("This may take a few minutes on first run...");
 
     let output = Command::new("uv")
         .arg("sync")
-        .current_dir(&tire_dir)
+        .current_dir(&fire_dir)
         .output();
 
     match output {
