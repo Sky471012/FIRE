@@ -1,3 +1,3 @@
-export { WindowControls } from "./WindowControls";
 export { ChildWindowControls } from "./ChildWindowControls";
+export { WindowControls } from "./WindowControls";
 export { WindowDemoButtons } from "./WindowDemoButtons";

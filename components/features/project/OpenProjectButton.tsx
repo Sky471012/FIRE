@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { FolderOpen } from "lucide-react";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { useProject } from "@/hooks/use-project";
+import { useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -14,6 +12,8 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useProject } from "@/hooks/use-project";
 
 export function OpenProjectButton() {
 	const { openProject } = useProject();
@@ -59,4 +59,3 @@ export function OpenProjectButton() {
 		</>
 	);
 }
-

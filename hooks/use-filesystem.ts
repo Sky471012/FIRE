@@ -49,8 +49,8 @@ export const useFileSystem = create<FileSystemState>((set) => ({
 	clipboard: null,
 	setClipboard: (data) => set({ clipboard: data }),
 	refreshTrigger: 0,
-	triggerRefresh: () => set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
+	triggerRefresh: () =>
+		set((state) => ({ refreshTrigger: state.refreshTrigger + 1 })),
 	showHiddenFiles: false,
 	setShowHiddenFiles: (show) => set({ showHiddenFiles: show }),
 }));
-

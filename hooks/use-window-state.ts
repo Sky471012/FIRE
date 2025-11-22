@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { useCallback, useEffect, useRef } from "react";
 import type { WindowState } from "@/types/window-state";
 
 const DEBOUNCE_DELAY = 500; // 500ms debounce
@@ -76,11 +76,14 @@ export function useWindowState(windowLabel: string) {
 					console.log(`Saved window state for ${windowLabel}`);
 					pendingStateRef.current = null;
 				} catch (error) {
-					console.error(`Failed to save window state for ${windowLabel}:`, error);
+					console.error(
+						`Failed to save window state for ${windowLabel}:`,
+						error,
+					);
 				}
 			}, DEBOUNCE_DELAY);
 		},
-		[windowLabel]
+		[windowLabel],
 	);
 
 	// Listen to window events
@@ -134,7 +137,7 @@ export function useWindowState(windowLabel: string) {
 		async (maximized: boolean) => {
 			await saveWindowState({ maximized });
 		},
-		[saveWindowState]
+		[saveWindowState],
 	);
 
 	// Save theme
@@ -142,7 +145,7 @@ export function useWindowState(windowLabel: string) {
 		async (theme: string) => {
 			await saveWindowState({ theme });
 		},
-		[saveWindowState]
+		[saveWindowState],
 	);
 
 	return {
@@ -150,4 +153,3 @@ export function useWindowState(windowLabel: string) {
 		saveTheme,
 	};
 }
-

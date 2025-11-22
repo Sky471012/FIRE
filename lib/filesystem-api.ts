@@ -101,4 +101,3 @@ export const fileSystemApi = {
 		return await invoke<boolean>("is_file_binary", { path });
 	},
 };
-

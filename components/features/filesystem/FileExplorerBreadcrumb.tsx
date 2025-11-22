@@ -1,13 +1,13 @@
 "use client";
 
 import { ChevronRight, Home } from "lucide-react";
-import { useFileSystem } from "@/hooks/use-filesystem";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useFileSystem } from "@/hooks/use-filesystem";
 
 export function FileExplorerBreadcrumb() {
 	const { rootPath, setRootPath } = useFileSystem();
@@ -40,4 +40,3 @@ export function FileExplorerBreadcrumb() {
 		</div>
 	);
 }
-

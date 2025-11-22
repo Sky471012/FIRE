@@ -14,8 +14,8 @@ import {
 	ResizablePanel,
 	ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useWindowState } from "@/hooks/use-window-state";
 
@@ -70,7 +70,6 @@ function MainLayoutContent({
 	const rightRef = useRef<
 		ImperativePanelHandle & { resize?: (size: number) => void }
 	>(null);
-
 
 	// Apply collapse/expand imperatively when state changes
 	useEffect(() => {
@@ -169,5 +168,3 @@ function MainLayoutContent({
 		</ThemeProvider>
 	);
 }
-
-

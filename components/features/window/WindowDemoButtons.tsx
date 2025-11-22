@@ -1,8 +1,8 @@
 "use client";
 
-import { Settings, HelpCircle } from "lucide-react";
-import { createChildWindow } from "@/lib/window";
+import { HelpCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createChildWindow } from "@/lib/window";
 
 /**
  * Example component showing how to use child dialog windows
@@ -60,4 +60,3 @@ export function WindowDemoButtons() {
 		</div>
 	);
 }
-

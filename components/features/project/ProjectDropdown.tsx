@@ -6,10 +6,10 @@ import {
 	DropdownMenuContent,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { OpenProjectButton } from "./OpenProjectButton";
-import { NewProjectButton } from "./NewProjectButton";
-import { RecentProjects } from "./RecentProjects";
 import { useProject } from "@/hooks/use-project";
+import { NewProjectButton } from "./NewProjectButton";
+import { OpenProjectButton } from "./OpenProjectButton";
+import { RecentProjects } from "./RecentProjects";
 
 export function ProjectDropdown() {
 	const { currentProjectName } = useProject();
@@ -36,4 +36,3 @@ export function ProjectDropdown() {
 		</div>
 	);
 }
-

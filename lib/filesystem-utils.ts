@@ -8,7 +8,7 @@ export function formatFileSize(bytes: number): string {
 	const k = 1024;
 	const i = Math.floor(Math.log(bytes) / Math.log(k));
 
-	return `${(bytes / Math.pow(k, i)).toFixed(1)} ${units[i]}`;
+	return `${(bytes / k ** i).toFixed(1)} ${units[i]}`;
 }
 
 /**
@@ -57,4 +57,3 @@ export function getFileExtension(fileName: string): string {
 export function isHiddenFile(fileName: string): boolean {
 	return fileName.startsWith(".");
 }
-
