@@ -112,6 +112,9 @@ export function FileTreeItem({
 
 	return (
 		<div
+			role="treeitem"
+			aria-selected={isSelected}
+			tabIndex={0}
 			draggable
 			onDragStart={onDragStart}
 			onDragOver={onDragOver}
@@ -153,15 +156,11 @@ export function FileTreeItem({
 
 			<Tooltip delayDuration={500}>
 				<TooltipTrigger asChild>
-					<div
+					<button
+						type="button"
 						onClick={onSelect}
 						onDoubleClick={onDoubleClick}
-						onKeyDown={(e) => {
-							if (e.key === "Enter" || e.key === " ") {
-								onSelect();
-							}
-						}}
-						className="flex items-center gap-2 flex-1 min-w-0"
+						className="flex items-center gap-2 flex-1 min-w-0 bg-transparent border-0 p-0 text-left"
 					>
 						{entry.is_directory ? (
 							<DirectoryIcon className={cn("h-4 w-4 flex-shrink-0", color)} />
@@ -169,7 +168,7 @@ export function FileTreeItem({
 							<Icon className={cn("h-4 w-4 flex-shrink-0", color)} />
 						)}
 						<span className="text-xs truncate">{entry.name}</span>
-					</div>
+					</button>
 				</TooltipTrigger>
 				<TooltipContent side="right" className="text-xs">
 					<div className="space-y-1">
