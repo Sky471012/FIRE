@@ -120,63 +120,6 @@ export function useDatasets() {
 		}
 	}, [loadTables]);
 
-	const ingestFromUrl = useCallback(
-		async (
-			projectPath: string,
-			url: string,
-			mode: "static" | "dynamic",
-			maxDepth: number,
-		) => {
-			setIsImporting(true);
-			setError(null);
-			try {
-				// Get the data path for the project
-				const dataPath = `${projectPath}/data`;
-
-				// Call the Python FastAPI /docs/ingest endpoint
-				const response = await fetch(
-					"http://localhost:8001/docs/ingest?" +
-						new URLSearchParams({
-							url,
-							data_path: dataPath,
-							mode,
-							max_depth: maxDepth.toString(),
-							max_workers: "10",
-							auto_embed: "true",
-							model_name: "sentence-transformers/all-MiniLM-L6-v2",
-						}),
-					{
-						method: "POST",
-					},
-				);
-
-				if (!response.ok) {
-					const errorData = await response.json().catch(() => ({}));
-					throw new Error(
-						errorData.detail || `HTTP error! status: ${response.status}`,
-					);
-				}
-
-				const result = await response.json();
-				console.log("URL ingestion result:", result);
-
-				// Reload tables after successful ingestion
-				await loadTables(projectPath);
-
-				return result;
-			} catch (err) {
-				console.error("Failed to ingest from URL:", err);
-				const errorMessage =
-					err instanceof Error ? err.message : String(err);
-				setError(errorMessage);
-				throw err;
-			} finally {
-				setIsImporting(false);
-			}
-		},
-		[loadTables],
-	);
-
 	return {
 		tables,
 		isLoading,
@@ -184,6 +127,5 @@ export function useDatasets() {
 		error,
 		loadTables,
 		importDataset,
-		ingestFromUrl,
 	};
 }

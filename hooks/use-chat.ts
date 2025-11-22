@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { safeInvoke } from "@/lib/tauri";
 
 const API_BASE_URL = "http://localhost:8001";
 
@@ -40,6 +41,7 @@ interface ChatState {
 	error: string | null;
 	visualizationSpec: VisualizationSpec | null;
 	currentProjectPath: string | null;
+	serverRequired: boolean;
 
 	// Actions
 	setCurrentProjectPath: (path: string | null) => void;
@@ -75,6 +77,7 @@ export const useChat = create<ChatState>((set, get) => ({
 	error: null,
 	visualizationSpec: null,
 	currentProjectPath: null,
+	serverRequired: false,
 
 	// Simple setters
 	setCurrentProjectPath: (path) => set({ currentProjectPath: path }),
@@ -87,7 +90,7 @@ export const useChat = create<ChatState>((set, get) => ({
 	setVisualizationSpec: (spec) => set({ visualizationSpec: spec }),
 	clearError: () => set({ error: null }),
 
-	// Load sessions
+	// Load sessions from local DuckDB database
 	loadSessions: async () => {
 		const dataPath = getDataPath(get().currentProjectPath);
 		if (!dataPath) return;
@@ -95,16 +98,11 @@ export const useChat = create<ChatState>((set, get) => ({
 		try {
 			set({ isLoading: true, error: null });
 
-			const response = await fetch(
-				`${API_BASE_URL}/sessions?data_path=${encodeURIComponent(dataPath)}`,
-			);
+			const sessions = await safeInvoke<ChatSession[]>("get_chat_sessions", {
+				dataPath: dataPath,
+			});
 
-			if (!response.ok) {
-				throw new Error(`Failed to load sessions: ${response.statusText}`);
-			}
-
-			const data = await response.json();
-			set({ sessions: data.sessions || [] });
+			set({ sessions: sessions || [] });
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to load sessions";
@@ -115,7 +113,7 @@ export const useChat = create<ChatState>((set, get) => ({
 		}
 	},
 
-	// Load session history
+	// Load session history from local DuckDB database
 	loadSessionHistory: async (sessionId: string) => {
 		const dataPath = getDataPath(get().currentProjectPath);
 		if (!dataPath) {
@@ -129,23 +127,16 @@ export const useChat = create<ChatState>((set, get) => ({
 		try {
 			set({ isLoading: true, error: null });
 
-			const response = await fetch(
-				`${API_BASE_URL}/sessions/${sessionId}/history?data_path=${encodeURIComponent(dataPath)}`,
-			);
+			const messages = await safeInvoke<ChatMessage[]>("get_chat_history", {
+				sessionId: sessionId,
+				dataPath: dataPath,
+			});
 
-			console.log("[useChat] Response status:", response.status);
-
-			if (!response.ok) {
-				throw new Error(
-					`Failed to load session history: ${response.statusText}`,
-				);
-			}
-
-			const data = await response.json();
-			console.log("[useChat] Loaded history:", data);
-			set({ 
-				messages: data.history || [], 
-				currentSessionId: sessionId 
+			console.log("[useChat] Loaded history:", messages);
+			set({
+				messages: messages || [],
+				currentSessionId: sessionId,
+				serverRequired: true // Mark that server is required for sending new messages
 			});
 			console.log("[useChat] Set current session to:", sessionId);
 		} catch (err) {
@@ -158,7 +149,7 @@ export const useChat = create<ChatState>((set, get) => ({
 		}
 	},
 
-	// Create new session
+	// Create new session in local DuckDB database
 	createSession: async () => {
 		const dataPath = getDataPath(get().currentProjectPath);
 		if (!dataPath) {
@@ -169,26 +160,22 @@ export const useChat = create<ChatState>((set, get) => ({
 		try {
 			set({ isLoading: true, error: null });
 
-			const response = await fetch(`${API_BASE_URL}/sessions/new`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ data_path: dataPath }),
+			const sessionId = await safeInvoke<string>("create_chat_session", {
+				dataPath: dataPath,
 			});
 
-			if (!response.ok) {
-				throw new Error(`Failed to create session: ${response.statusText}`);
+			if (!sessionId) {
+				throw new Error("Failed to create session");
 			}
 
-			const data = await response.json();
 			await get().loadSessions();
 			set({ 
-				currentSessionId: data.session_id,
+				currentSessionId: sessionId,
 				messages: [],
-				visualizationSpec: null
+				visualizationSpec: null,
+				serverRequired: true // Mark that server is required for sending messages
 			});
-			return data.session_id;
+			return sessionId;
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to create session";
@@ -200,7 +187,7 @@ export const useChat = create<ChatState>((set, get) => ({
 		}
 	},
 
-	// Delete session
+	// Delete session from local DuckDB database
 	deleteSession: async (sessionId: string) => {
 		const dataPath = getDataPath(get().currentProjectPath);
 		if (!dataPath) return;
@@ -208,16 +195,10 @@ export const useChat = create<ChatState>((set, get) => ({
 		try {
 			set({ isLoading: true, error: null });
 
-			const response = await fetch(
-				`${API_BASE_URL}/sessions/${sessionId}?data_path=${encodeURIComponent(dataPath)}`,
-				{
-					method: "DELETE",
-				},
-			);
-
-			if (!response.ok) {
-				throw new Error(`Failed to delete session: ${response.statusText}`);
-			}
+			await safeInvoke("delete_chat_session", {
+				sessionId: sessionId,
+				dataPath: dataPath,
+			});
 
 			await get().loadSessions();
 
@@ -226,7 +207,8 @@ export const useChat = create<ChatState>((set, get) => ({
 				set({ 
 					currentSessionId: null,
 					messages: [],
-					visualizationSpec: null
+					visualizationSpec: null,
+					serverRequired: false
 				});
 			}
 		} catch (err) {

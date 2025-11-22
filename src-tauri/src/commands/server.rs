@@ -98,69 +98,28 @@ pub async fn start_python_server(state: State<'_, AppState>) -> Result<String, S
         .parent()
         .ok_or_else(|| "Failed to get server directory".to_string())?;
 
-    // Get the Python executable and uvicorn module
-    let (python_cmd, _uvicorn_path) = if is_dev {
-        // In dev mode, .venv is at project root
-        let current_dir =
-            env::current_dir().map_err(|e| format!("Failed to get current directory: {}", e))?;
+    // Get the Python executable from ~/.fire/.venv (for both dev and production)
+    let fire_dir = crate::utils::utils::get_fire_dir()
+        .map_err(|e| format!("Failed to get .fire directory: {}", e))?;
 
-        // If we're in src-tauri, go up one level to project root
-        let project_root = if current_dir.ends_with("src-tauri") {
-            current_dir
-                .parent()
-                .ok_or_else(|| "Failed to get project root".to_string())?
-                .to_path_buf()
-        } else {
-            current_dir
-        };
+    #[cfg(target_os = "windows")]
+    let venv_python = fire_dir.join(".venv").join("Scripts").join("python.exe");
 
-        let venv_python = project_root
-            .join(".venv")
-            .join("Scripts")
-            .join("python.exe");
+    #[cfg(not(target_os = "windows"))]
+    let venv_python = fire_dir.join(".venv").join("bin").join("python");
 
-        if !venv_python.exists() {
-            return Err(format!(
-                "Development Python not found at: {}. Please ensure .venv is set up.",
-                venv_python.display()
-            ));
-        }
+    if !venv_python.exists() {
+        return Err(format!(
+            "Python not found at: {}. Please ensure the virtual environment is set up.",
+            venv_python.display()
+        ));
+    }
 
-        (
-            venv_python.to_string_lossy().to_string(),
-            "uvicorn".to_string(),
-        )
-    } else {
-        // In production, use embedded Python
-        let python_exe = venv_extractor::get_python_executable()
-            .map_err(|e| format!("Failed to get Python executable: {}", e))?;
+    let python_cmd = venv_python
+        .to_str()
+        .ok_or_else(|| "Invalid Python path".to_string())?
+        .to_string();
 
-        let python_str = python_exe
-            .to_str()
-            .ok_or_else(|| "Invalid Python path".to_string())?
-            .to_string();
-
-        // Get the embedded Python directory
-        let python_embed_dir = python_exe
-            .parent()
-            .and_then(|p| p.parent())
-            .ok_or_else(|| "Failed to get Python embed directory".to_string())?;
-
-        let uvicorn_module = python_embed_dir
-            .join("Lib")
-            .join("site-packages")
-            .join("uvicorn")
-            .join("__main__.py");
-
-        if !uvicorn_module.exists() {
-            return Err(format!(
-                "Uvicorn not found at: {}. Please ensure the application is properly installed.",
-                uvicorn_module.display()
-            ));
-        }
-
-        (python_str, uvicorn_module.to_string_lossy().to_string())
-    };
 
     let _ = crate::utils::logger::log_info(format!("Python command: {}", python_cmd));
     let _ = crate::utils::logger::log_info(format!("Server directory: {}", server_dir.display()));

@@ -1,12 +1,13 @@
 "use client";
 
 import {
-	BarChart3,
 	Database,
 	FolderTree,
 	MessageSquare,
 	Search,
 	Settings,
+	Play,
+	Square,
 } from "lucide-react";
 import {
 	Tooltip,
@@ -14,19 +15,26 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLayout } from "@/hooks/use-layout";
+import { usePythonServer } from "@/hooks/use-python-server";
 import { cn } from "@/lib/utils";
 import { createChildWindow } from "@/lib/window";
 
 export function ActivityBar() {
 	const { activeView, setActiveView } = useLayout();
+	const { isRunning, isLoading, toggleServer } = usePythonServer();
 
 	const topButtons = [
 		{ id: "explorer", icon: FolderTree, label: "Data Explorer" },
 		{ id: "search", icon: Search, label: "Global Search" },
 		{ id: "database", icon: Database, label: "Datasets" },
-		{ id: "analytics", icon: BarChart3, label: "Analytics" },
 		{ id: "chat", icon: MessageSquare, label: "AI Chat" },
 	];
+
+	const handleViewClick = (viewId: string) => {
+		// Only set the active view for sidebar updates
+		// Don't create tabs for views - they show content in sidebar
+		setActiveView(viewId);
+	};
 
 	return (
 		<div className="w-12 bg-muted/30 border-r border-border flex flex-col items-center py-2 gap-0.5">
@@ -37,7 +45,7 @@ export function ActivityBar() {
 						<TooltipTrigger asChild>
 							<button
 								type="button"
-								onClick={() => setActiveView(button.id)}
+								onClick={() => handleViewClick(button.id)}
 								className={cn(
 									"h-12 w-full flex items-center justify-center transition-colors relative",
 									"hover:bg-accent",
@@ -62,6 +70,35 @@ export function ActivityBar() {
 
 			{/* Spacer */}
 			<div className="flex-1" />
+
+			{/* Python Server Control Button */}
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<button
+						type="button"
+						onClick={toggleServer}
+						disabled={isLoading}
+						className={cn(
+							"h-12 w-full flex items-center justify-center transition-colors relative",
+							"hover:bg-accent",
+							isRunning ? "text-red-500" : "text-green-500",
+							isLoading && "opacity-50 cursor-wait",
+						)}
+						aria-label={isRunning ? "Stop Python Server" : "Start Python Server"}
+					>
+						{isRunning ? (
+							<Square className="h-5 w-5 fill-current" />
+						) : (
+							<Play className="h-5 w-5 fill-current" />
+						)}
+					</button>
+				</TooltipTrigger>
+				<TooltipContent side="right" sideOffset={8}>
+					<p className="text-xs">
+						{isRunning ? "Stop Python Server" : "Start Python Server"}
+					</p>
+				</TooltipContent>
+			</Tooltip>
 
 			{/* Settings Button at Bottom */}
 			<Tooltip>

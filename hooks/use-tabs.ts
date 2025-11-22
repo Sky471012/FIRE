@@ -10,12 +10,15 @@ export interface Tab {
 	content?: React.ReactNode;
 	filePath?: string;
 	isBinary?: boolean;
+	type?: "file" | "view" | "welcome";
+	viewId?: string; // For view tabs (chat, datasets, analytics, etc.)
 }
 
 interface TabsState {
 	tabs: Tab[];
 	activeTabId: string | null;
 	addTab: (tab: Omit<Tab, "id">) => string;
+	addViewTab: (viewId: string, title: string, icon?: string) => string;
 	removeTab: (id: string) => void;
 	setActiveTab: (id: string) => void;
 	updateTab: (id: string, updates: Partial<Tab>) => void;
@@ -33,6 +36,7 @@ export const useTabs = create<TabsState>((set, get) => ({
 			icon: "Flame",
 			isPinned: false,
 			isDirty: false,
+			type: "welcome",
 		},
 	],
 	activeTabId: "welcome",
@@ -50,8 +54,46 @@ export const useTabs = create<TabsState>((set, get) => ({
 			}
 		}
 
+		// Check if a tab with the same viewId already exists
+		if (tab.viewId) {
+			const existingTab = state.tabs.find((t) => t.viewId === tab.viewId);
+			if (existingTab) {
+				// Switch to existing tab instead of creating a new one
+				set({ activeTabId: existingTab.id });
+				return existingTab.id;
+			}
+		}
+
 		const id = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 		const newTab = { ...tab, id };
+		set((state) => ({
+			tabs: [...state.tabs, newTab],
+			activeTabId: id,
+		}));
+		return id;
+	},
+
+	addViewTab: (viewId, title, icon) => {
+		const state = get();
+
+		// Check if a tab with the same viewId already exists
+		const existingTab = state.tabs.find((t) => t.viewId === viewId);
+		if (existingTab) {
+			// Switch to existing tab instead of creating a new one
+			set({ activeTabId: existingTab.id });
+			return existingTab.id;
+		}
+
+		const id = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+		const newTab: Tab = {
+			id,
+			title,
+			icon,
+			type: "view",
+			viewId,
+			isPinned: false,
+			isDirty: false,
+		};
 		set((state) => ({
 			tabs: [...state.tabs, newTab],
 			activeTabId: id,

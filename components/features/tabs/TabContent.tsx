@@ -18,7 +18,7 @@ export function TabContent() {
 	}
 
 	// Handle welcome tab
-	if (activeTab.id === "welcome") {
+	if (activeTab.type === "welcome" || activeTab.id === "welcome") {
 		return <WelcomePage />;
 	}
 
@@ -27,7 +27,7 @@ export function TabContent() {
 		return <FileTabContent filePath={activeTab.filePath} tabId={activeTab.id} />;
 	}
 
-	// Handle custom content tabs
+	// Handle custom content tabs (for chat, custom pages, etc.)
 	if (activeTab.content) {
 		return <>{activeTab.content}</>;
 	}

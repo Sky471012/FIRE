@@ -39,6 +39,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---------- Health Check Endpoint ----------
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify server is running and ready"""
+    return {"status": "healthy", "message": "Server is running"}
+
 
 # ---------- Schemas ----------
 class ChatRequest(BaseModel):

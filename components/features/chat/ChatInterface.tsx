@@ -1,16 +1,18 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Send, Loader2, MessageSquare, Sparkles } from "lucide-react";
+import { Send, Loader2, MessageSquare, Sparkles, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat, type ChatMessage } from "@/hooks/use-chat";
+import { usePythonServer } from "@/hooks/use-python-server";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function ChatInterface() {
 	const {
@@ -22,7 +24,9 @@ export function ChatInterface() {
 		createSession,
 		error,
 		clearError,
+		serverRequired,
 	} = useChat();
+	const { isRunning: isServerRunning, startServer, isLoading: isServerLoading } = usePythonServer();
 
 	const [inputMessage, setInputMessage] = useState("");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -236,6 +240,42 @@ export function ChatInterface() {
 			{/* Input Area */}
 			<div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 				<div className="max-w-5xl mx-auto px-4 py-4">
+					{/* Server Required Alert */}
+					{serverRequired && !isServerRunning && (
+						<Alert className="mb-4 bg-primary/5 border-primary/20">
+							{isServerLoading ? (
+								<Loader2 className="h-4 w-4 text-primary animate-spin" />
+							) : (
+								<PlayCircle className="h-4 w-4 text-primary" />
+							)}
+							<AlertDescription className="flex items-center justify-between">
+								<span className="text-sm">
+									{isServerLoading
+										? "Initializing AI server... This may take a few moments."
+										: "The AI server is required to send messages. Start the server to continue chatting."}
+								</span>
+								<Button
+									onClick={startServer}
+									disabled={isServerLoading}
+									size="sm"
+									className="ml-4"
+								>
+									{isServerLoading ? (
+										<>
+											<Loader2 className="h-4 w-4 mr-2 animate-spin" />
+											Starting...
+										</>
+									) : (
+										<>
+											<PlayCircle className="h-4 w-4 mr-2" />
+											Start Server
+										</>
+									)}
+								</Button>
+							</AlertDescription>
+						</Alert>
+					)}
+
 					<div className="flex gap-3 items-end">
 						<div className="flex-1 relative">
 							<Textarea
@@ -243,9 +283,13 @@ export function ChatInterface() {
 								value={inputMessage}
 								onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputMessage(e.target.value)}
 								onKeyDown={handleKeyDown}
-								placeholder="Ask a question about your data..."
+								placeholder={
+									serverRequired && !isServerRunning
+										? "Start the server to send messages..."
+										: "Ask a question about your data..."
+								}
 								className="min-h-[52px] max-h-[200px] resize-none pr-12 rounded-lg shadow-sm"
-								disabled={isSending}
+								disabled={isSending || (serverRequired && !isServerRunning)}
 							/>
 							<div className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
 								{inputMessage.length > 0 && `${inputMessage.length} chars`}
@@ -253,7 +297,7 @@ export function ChatInterface() {
 						</div>
 						<Button
 							onClick={handleSend}
-							disabled={!inputMessage.trim() || isSending}
+							disabled={!inputMessage.trim() || isSending || (serverRequired && !isServerRunning)}
 							size="icon"
 							className="h-[52px] w-[52px] flex-shrink-0 rounded-lg shadow-sm"
 						>

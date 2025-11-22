@@ -6,18 +6,16 @@ import { useChat } from "@/hooks/use-chat";
 
 /**
  * Provider component that synchronizes project path with chat store
+ * Sessions are loaded lazily when the user opens the chat view
  */
 export function ChatProvider({ children }: { children: React.ReactNode }) {
 	const { currentProjectPath } = useProject();
-	const { setCurrentProjectPath, loadSessions } = useChat();
+	const { setCurrentProjectPath } = useChat();
 
-	// Sync project path and load sessions when project changes
+	// Only sync project path, don't auto-load sessions
 	useEffect(() => {
 		setCurrentProjectPath(currentProjectPath);
-		if (currentProjectPath) {
-			loadSessions();
-		}
-	}, [currentProjectPath, setCurrentProjectPath, loadSessions]);
+	}, [currentProjectPath, setCurrentProjectPath]);
 
 	return <>{children}</>;
 }

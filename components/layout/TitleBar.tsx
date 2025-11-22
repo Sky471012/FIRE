@@ -36,7 +36,7 @@ export function TitleBar() {
 
 			{/* Center: Tabs + Plus Button */}
 			<div className="flex items-center min-w-0 flex-1">
-				<div className="flex items-center min-w-0 overflow-x-auto scrollbar-thin">
+				<div className="flex items-center min-w-0 flex-1 overflow-x-auto scrollbar-thin">
 					<div className="flex items-center h-9 min-w-max">
 						{tabs.map((tab) => (
 							<Tab key={tab.id} tab={tab} isActive={tab.id === activeTabId} />
@@ -58,8 +58,6 @@ export function TitleBar() {
 				</button>
 			</div>
 
-			{/* Spacer to push sidebar toggles and window controls to the right */}
-			<div className="flex-1 min-w-4" />
 
 			{/* Sidebar Toggle Buttons */}
 			<div className="flex items-center flex-shrink-0 border-l border-border/50">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useChat, type ChatSession } from "@/hooks/use-chat";
 import { useLayout } from "@/hooks/use-layout";
+import { useTabs } from "@/hooks/use-tabs";
 import { cn } from "@/lib/utils";
 import {
 	AlertDialog,
@@ -18,8 +19,9 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
+import { ChatInterface } from "./ChatInterface";
 
 export function ChatSessionsList() {
 	const {
@@ -29,15 +31,33 @@ export function ChatSessionsList() {
 		createSession,
 		loadSessionHistory,
 		deleteSession,
+		loadSessions,
 		error,
 	} = useChat();
 	const { activeView, setActiveView } = useLayout();
+	const { addTab } = useTabs();
 	const [deletingSessionId, setDeletingSessionId] = useState<string | null>(
 		null,
 	);
 
+	// Load sessions when component mounts
+	useEffect(() => {
+		loadSessions();
+	}, [loadSessions]);
+
 	const handleCreateSession = async () => {
 		await createSession();
+		// Wait a moment for currentSessionId to be set
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		// Create a tab for the chat with sessionId as identifier
+		if (currentSessionId) {
+			addTab({
+				title: "AI Chat",
+				icon: "MessageSquare",
+				content: <ChatInterface />,
+				viewId: `chat-${currentSessionId}`, // Use unique identifier
+			});
+		}
 		// Ensure we're on the chat view
 		if (activeView !== "chat") {
 			setActiveView("chat");
@@ -47,6 +67,13 @@ export function ChatSessionsList() {
 	const handleSelectSession = async (sessionId: string) => {
 		console.log("[ChatSessionsList] Selecting session:", sessionId);
 		await loadSessionHistory(sessionId);
+		// Create a tab for the chat with sessionId as identifier
+		addTab({
+			title: "AI Chat",
+			icon: "MessageSquare",
+			content: <ChatInterface />,
+			viewId: `chat-${sessionId}`, // Use unique identifier to prevent duplicates
+		});
 		// Ensure we're on the chat view after loading the session
 		if (activeView !== "chat") {
 			console.log("[ChatSessionsList] Switching to chat view");
@@ -98,7 +125,9 @@ export function ChatSessionsList() {
 							<div className="mb-3 p-3 rounded-full bg-muted/50 inline-flex">
 								<MessageSquare className="h-6 w-6 text-muted-foreground" />
 							</div>
-							<p className="text-xs text-muted-foreground font-medium mb-1">No chat sessions yet</p>
+							<p className="text-xs text-muted-foreground font-medium mb-1">
+								No chat sessions yet
+							</p>
 							<p className="text-[10px] text-muted-foreground/70">
 								Click + to start a new chat
 							</p>
@@ -121,12 +150,14 @@ export function ChatSessionsList() {
 									}
 								}}
 							>
-								<div className={cn(
-									"flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5",
-									currentSessionId === session.id
-										? "bg-primary/20"
-										: "bg-muted"
-								)}>
+								<div
+									className={cn(
+										"flex-shrink-0 w-7 h-7 rounded-md flex items-center justify-center mt-0.5",
+										currentSessionId === session.id
+											? "bg-primary/20"
+											: "bg-muted",
+									)}
+								>
 									<MessageSquare className="h-3.5 w-3.5" />
 								</div>
 								<div className="flex-1 min-w-0">
@@ -155,7 +186,9 @@ export function ChatSessionsList() {
 											)}
 										</Button>
 									</AlertDialogTrigger>
-									<AlertDialogContent onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+									<AlertDialogContent
+										onClick={(e: React.MouseEvent) => e.stopPropagation()}
+									>
 										<AlertDialogHeader>
 											<AlertDialogTitle>Delete Chat Session</AlertDialogTitle>
 											<AlertDialogDescription>

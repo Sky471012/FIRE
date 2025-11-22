@@ -1,6 +1,6 @@
 "use client";
 
-import { Database, Plus, Trash2, RefreshCw, FileUp, Globe } from "lucide-react";
+import { Database, Plus, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDatasets } from "@/hooks/use-datasets";
@@ -17,15 +17,8 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { UrlIngestDialog } from "./UrlIngestDialog";
 
 export function DatasetsList() {
 	const { currentProjectPath } = useProject();
@@ -35,7 +28,6 @@ export function DatasetsList() {
 		error,
 		loadTables,
 		importDataset,
-		ingestFromUrl,
 		isImporting,
 	} = useDatasets();
 
@@ -48,18 +40,13 @@ export function DatasetsList() {
 
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [tableToDelete, setTableToDelete] = useState<string | null>(null);
-	const [urlDialogOpen, setUrlDialogOpen] = useState(false);
 
-	const handleImportFromLocal = async () => {
+	const handleImportClick = async () => {
 		if (!currentProjectPath) {
 			console.error("No project path available");
 			return;
 		}
 		await importDataset(currentProjectPath);
-	};
-
-	const handleImportFromUrl = () => {
-		setUrlDialogOpen(true);
 	};
 
 	const handleRefresh = () => {
@@ -113,29 +100,16 @@ export function DatasetsList() {
 							className={cn("h-3.5 w-3.5", isLoading && "animate-spin")}
 						/>
 					</Button>
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="h-7 w-7 p-0"
-								disabled={isImporting || isLoading}
-								title="Import dataset"
-							>
-								<Plus className="h-4 w-4" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem onClick={handleImportFromLocal}>
-								<FileUp className="h-4 w-4 mr-2" />
-								Load from Local
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={handleImportFromUrl}>
-								<Globe className="h-4 w-4 mr-2" />
-								Load from URL
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-7 w-7 p-0"
+						onClick={handleImportClick}
+						disabled={isImporting || isLoading}
+						title="Import dataset"
+					>
+						<Plus className="h-4 w-4" />
+					</Button>
 				</div>
 			</div>
 
@@ -173,28 +147,15 @@ export function DatasetsList() {
 							<p className="text-xs text-muted-foreground mb-4">
 								Click the + button to import a dataset
 							</p>
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button
-										variant="outline"
-										size="sm"
-										disabled={isImporting}
-									>
-										<Plus className="h-3.5 w-3.5 mr-1.5" />
-										Import Dataset
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent>
-									<DropdownMenuItem onClick={handleImportFromLocal}>
-										<FileUp className="h-4 w-4 mr-2" />
-										Load from Local
-									</DropdownMenuItem>
-									<DropdownMenuItem onClick={handleImportFromUrl}>
-										<Globe className="h-4 w-4 mr-2" />
-										Load from URL
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleImportClick}
+								disabled={isImporting}
+							>
+								<Plus className="h-3.5 w-3.5 mr-1.5" />
+								Import Dataset
+							</Button>
 						</div>
 					) : (
 						// Table list
@@ -247,18 +208,6 @@ export function DatasetsList() {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-
-			{/* URL Ingest Dialog */}
-			<UrlIngestDialog
-				open={urlDialogOpen}
-				onOpenChange={setUrlDialogOpen}
-				onSubmit={async (url, mode, maxDepth) => {
-					if (!currentProjectPath) {
-						throw new Error("No project path available");
-					}
-					await ingestFromUrl(currentProjectPath, url, mode, maxDepth);
-				}}
-			/>
 		</div>
 	);
 }
