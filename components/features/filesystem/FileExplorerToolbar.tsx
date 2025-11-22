@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
@@ -10,7 +10,8 @@ import {
 import { useFileSystem } from "@/hooks/use-filesystem";
 
 export function FileExplorerToolbar() {
-	const { triggerRefresh, rootPath, showHiddenFiles, setShowHiddenFiles } = useFileSystem();
+	const { triggerRefresh, rootPath, showHiddenFiles, setShowHiddenFiles } =
+		useFileSystem();
 
 	return (
 		<div className="flex items-center justify-between px-4 py-2 border-b border-border">
@@ -62,4 +63,3 @@ export function FileExplorerToolbar() {
 		</div>
 	);
 }
-

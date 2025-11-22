@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
 
 export interface RecentProject {
 	path: string;
@@ -10,9 +10,9 @@ export function useProject() {
 	const [currentProjectPath, setCurrentProjectPath] = useState<string | null>(
 		null,
 	);
-	const [currentProjectName, setCurrentProjectName] = useState<
-		string | null
-	>(null);
+	const [currentProjectName, setCurrentProjectName] = useState<string | null>(
+		null,
+	);
 	const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -130,4 +130,3 @@ export function useProject() {
 		refreshRecentProjects: loadRecentProjects,
 	};
 }
-

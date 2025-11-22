@@ -30,4 +30,3 @@ export interface ClipboardData {
 	entry: FileSystemEntry;
 	operation: "copy" | "cut";
 }
-

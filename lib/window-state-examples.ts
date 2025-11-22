@@ -4,7 +4,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { WindowState, GlobalSettings } from "@/types/window-state";
+import type { GlobalSettings, WindowState } from "@/types/window-state";
 
 /**
  * Example 1: Get window state for current window
@@ -131,4 +131,3 @@ export async function monitorWindowChanges() {
 		unlistenMove();
 	};
 }
-

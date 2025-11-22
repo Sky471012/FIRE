@@ -1,8 +1,8 @@
 "use client";
 
-import { FolderOpen } from "lucide-react";
-import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
+import { FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useFileSystem } from "@/hooks/use-filesystem";
@@ -40,7 +40,8 @@ export function FileExplorerEmpty() {
 			<FolderOpen className="h-16 w-16 text-muted-foreground/50 mb-4" />
 			<h3 className="text-lg font-semibold mb-2">No Vault Opened</h3>
 			<p className="text-sm text-muted-foreground mb-6 max-w-sm">
-				Open a vault to browse files and directories. Your most recent vault will be loaded automatically next time.
+				Open a vault to browse files and directories. Your most recent vault
+				will be loaded automatically next time.
 			</p>
 			<Button onClick={handleOpenFolder} variant="default">
 				<FolderOpen className="mr-2 h-4 w-4" />
@@ -65,4 +66,3 @@ export function FileExplorerEmpty() {
 		</div>
 	);
 }
-

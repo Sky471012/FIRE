@@ -9,7 +9,11 @@ import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 // Re-export types
-export type { WindowState, GlobalSettings, WindowLabel } from "@/types/window-state";
+export type {
+	GlobalSettings,
+	WindowLabel,
+	WindowState,
+} from "@/types/window-state";
 export { WINDOW_LABELS } from "@/types/window-state";
 
 export interface ChildWindowOptions {
@@ -51,15 +55,10 @@ export interface ChildWindowOptions {
  * });
  * ```
  */
-export async function createChildWindow(options: ChildWindowOptions): Promise<void> {
-	const {
-		label,
-		title,
-		url,
-		width = 600,
-		height = 400,
-		parentLabel,
-	} = options;
+export async function createChildWindow(
+	options: ChildWindowOptions,
+): Promise<void> {
+	const { label, title, url, width = 600, height = 400, parentLabel } = options;
 
 	const parent = parentLabel || getCurrentWindow().label;
 
@@ -67,7 +66,9 @@ export async function createChildWindow(options: ChildWindowOptions): Promise<vo
 	const isDev = process.env.NODE_ENV === "development";
 	const fullUrl = isDev
 		? `http://localhost:3000${url.startsWith("/") ? url : `/${url}`}`
-		: url.startsWith("/") ? url : `/${url}`;
+		: url.startsWith("/")
+			? url
+			: `/${url}`;
 
 	await invoke("create_child_window", {
 		parentLabel: parent,
@@ -158,4 +159,3 @@ export async function closeCurrentWindow(): Promise<void> {
 	const currentWindow = getCurrentWindow();
 	await currentWindow.close();
 }
-

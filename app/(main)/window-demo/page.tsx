@@ -69,7 +69,8 @@ export default function WindowDemoPage() {
 							<div className="rounded-lg border border-border p-4">
 								<h3 className="font-medium mb-1">🔗 Synchronized Movement</h3>
 								<p className="text-sm text-muted-foreground">
-									When parent minimizes or moves, the child follows automatically
+									When parent minimizes or moves, the child follows
+									automatically
 								</p>
 							</div>
 							<div className="rounded-lg border border-border p-4">
@@ -150,4 +151,3 @@ await openSettingsDialog();`}</code>
 		</div>
 	);
 }
-

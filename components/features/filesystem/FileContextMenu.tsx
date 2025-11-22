@@ -2,13 +2,13 @@
 
 import {
 	Copy,
-	Scissors,
-	Trash2,
 	Edit,
 	FilePlus,
+	FileText,
 	FolderPlus,
 	RefreshCw,
-	FileText,
+	Scissors,
+	Trash2,
 } from "lucide-react";
 import {
 	ContextMenu,
@@ -48,14 +48,22 @@ export function FileContextMenu({
 	onOpenFile,
 	canPaste,
 }: FileContextMenuProps) {
-	console.log("[FileContextMenu] Rendering with entry:", entry, "canPaste:", canPaste);
+	console.log(
+		"[FileContextMenu] Rendering with entry:",
+		entry,
+		"canPaste:",
+		canPaste,
+	);
 
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-			<ContextMenuContent className="w-56" onOpenAutoFocus={() => {
-				console.log("[FileContextMenu] Menu opened");
-			}}>
+			<ContextMenuContent
+				className="w-56"
+				onOpenAutoFocus={() => {
+					console.log("[FileContextMenu] Menu opened");
+				}}
+			>
 				{entry && !entry.is_directory && onOpenFile && (
 					<>
 						<ContextMenuItem onClick={onOpenFile}>
@@ -121,4 +129,3 @@ export function FileContextMenu({
 		</ContextMenu>
 	);
 }
-

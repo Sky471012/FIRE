@@ -2,23 +2,23 @@
 
 import {
 	ChevronRight,
+	Code,
+	Database,
 	File,
+	FileJson,
+	FileSpreadsheet,
 	FileText,
 	Folder,
 	FolderOpen,
 	Image,
-	Code,
-	Database,
-	FileJson,
-	FileSpreadsheet,
 } from "lucide-react";
 import {
 	Tooltip,
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatDate, formatFileSize } from "@/lib/filesystem-utils";
 import { cn } from "@/lib/utils";
-import { formatFileSize, formatDate } from "@/lib/filesystem-utils";
 import type { FileSystemEntry } from "@/types/filesystem";
 
 interface FileTreeItemProps {
@@ -44,10 +44,7 @@ function getFileIcon(fileName: string, isDirectory: boolean) {
 
 	const ext = fileName.split(".").pop()?.toLowerCase();
 
-	const iconMap: Record<
-		string,
-		{ icon: typeof File; color: string }
-	> = {
+	const iconMap: Record<string, { icon: typeof File; color: string }> = {
 		// Images
 		png: { icon: Image, color: "text-purple-500" },
 		jpg: { icon: Image, color: "text-purple-500" },
@@ -128,7 +125,9 @@ export function FileTreeItem({
 			className={cn(
 				"group flex items-center gap-1 px-2 py-0.5 hover:bg-accent rounded transition-all cursor-pointer select-none",
 				isSelected && "bg-accent ring-1 ring-primary/20",
-				isDragOver && entry.is_directory && "bg-primary/10 border-2 border-primary border-dashed",
+				isDragOver &&
+					entry.is_directory &&
+					"bg-primary/10 border-2 border-primary border-dashed",
 			)}
 			style={{ paddingLeft: `${level * 12 + 8}px` }}
 		>
@@ -191,4 +190,3 @@ export function FileTreeItem({
 		</div>
 	);
 }
-

@@ -25,4 +25,3 @@ export const WINDOW_LABELS = {
 } as const;
 
 export type WindowLabel = (typeof WINDOW_LABELS)[keyof typeof WINDOW_LABELS];
-

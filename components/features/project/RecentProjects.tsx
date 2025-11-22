@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
 import {
 	DropdownMenuItem,
 	DropdownMenuLabel,
@@ -52,10 +52,7 @@ export function RecentProjects() {
 			<DropdownMenuSeparator />
 			<DropdownMenuLabel>Recent Projects</DropdownMenuLabel>
 			{recentProjects.length === 0 ? (
-				<DropdownMenuItem
-					disabled
-					className="text-muted-foreground text-xs"
-				>
+				<DropdownMenuItem disabled className="text-muted-foreground text-xs">
 					No recent projects
 				</DropdownMenuItem>
 			) : (
@@ -77,4 +74,3 @@ export function RecentProjects() {
 		</>
 	);
 }
-
