@@ -32,7 +32,8 @@ app = FastAPI(title="Argo AI Agent API")
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:1420", "tauri://localhost"],
+    # allow_origins=["http://localhost:3000", "http://localhost:1420", "tauri://localhost"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

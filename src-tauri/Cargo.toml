@@ -33,10 +33,11 @@ dirs = "6.0.0"
 anyhow = "1.0.100"
 toml = "0.9.8"
 uuid = { version = "1.18.1", features = ["v4"] }
-reqwest = { version = "0.12.24", features = ["json", "rustls-tls"] }
-urlencoding = "2.1.2"
-zip = "6.0.0"
+reqwest = { version = "0.12.24", features = ["json"] }
 duckdb = {version = "1.4.1", default-features = false}
+coding = "0.1.0"
+zip = "6.0.0"
+urlencoding = "2.1.3"
 
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.62.2", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }

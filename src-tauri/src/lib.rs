@@ -5,6 +5,7 @@ pub mod db;
 pub mod file_operations;
 pub mod utils;
 mod venv_extractor;
+mod venv_manager;
 
 use tauri::Manager;
 use utils::logger;
@@ -27,13 +28,68 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(commands::AppState::new())
         .setup(|app| {
+            let app_state = app.state::<commands::AppState>();
+
+            logger::internal_log_info("Starting application setup...");
+
+            // Initialize Python virtual environment on startup
+            {
+                logger::internal_log_info("Checking Python virtual environment...");
+
+                let venv_configured = {
+                    let global_settings = app_state.global_settings.lock()
+                        .expect("Failed to lock global settings");
+                    let configured = global_settings.get_venv_configured();
+                    logger::internal_log_debug(&format!("Current config.venv = {}", configured));
+                    configured
+                };
+
+                match venv_manager::initialize_venv(venv_configured) {
+                    Ok(was_initialized) => {
+                        if was_initialized {
+                            // Reacquire lock to update config
+                            let mut global_settings = app_state.global_settings.lock()
+                                .expect("Failed to lock global settings");
+                            global_settings.set_venv_configured(true);
+
+                            if let Err(e) = global_settings.save() {
+                                logger::internal_log_error(&format!("Failed to save venv configuration: {}", e));
+                            } else {
+                                logger::internal_log_info("✓ Updated config.venv = true in global_settings.toml");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        let error_msg = e.to_string();
+                        logger::internal_log_error(&format!("Failed to initialize virtual environment: {}", error_msg));
+
+                        // Check if it's a UV not installed error (not a network error)
+                        if error_msg.contains("UV_NOT_INSTALLED") {
+                            logger::internal_log_error("UV is not installed - showing error dialog");
+                            venv_manager::show_uv_installation_error(&app.handle());
+                        } else if !error_msg.contains("NETWORK_ERROR") {
+                            // Show error dialog for other non-network errors too
+                            logger::internal_log_error("UV command failed - showing error dialog");
+                            venv_manager::show_uv_installation_error(&app.handle());
+                        } else {
+                            logger::internal_log_error("Network error - skipping UV installation dialog");
+                        }
+
+                        logger::internal_log_error("Application will continue, but Python features may not work");
+                    }
+                }
+            }
+
+            logger::internal_log_debug("Setting up main window...");
+
             // Setup main window with saved settings
             if let Some(main_window) = app.get_webview_window("main") {
-                let app_state = app.state::<commands::AppState>();
 
                 // Load window state in a separate scope to drop the mutex guard
                 let window_state = {
-                    let global_settings = app_state.global_settings.lock()
+                    let global_settings = app_state
+                        .global_settings
+                        .lock()
                         .expect("Failed to lock global settings");
                     global_settings.get_window_state("main")
                 };
@@ -44,10 +100,11 @@ pub fn run() {
                     height: window_state.height as u32,
                 }));
 
-                let _ = main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                    x: window_state.pos_x,
-                    y: window_state.pos_y,
-                }));
+                let _ =
+                    main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                        x: window_state.pos_x,
+                        y: window_state.pos_y,
+                    }));
 
                 // Apply maximized state if present
                 if let Some(maximized) = window_state.maximized {
@@ -58,8 +115,13 @@ pub fn run() {
 
                 // Show window after applying settings
                 let _ = main_window.show();
+
+                logger::internal_log_info("✓ Main window configured and shown");
+            } else {
+                logger::internal_log_warn("Main window not found!");
             }
 
+            logger::internal_log_info("✓ Application setup complete");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -106,6 +168,8 @@ pub fn run() {
             commands::get_file_info,
             // Data loader commands
             commands::ingest_docs_from_url,
+            // File sharing commands
+            commands::zip_and_send_files,
             // Server management commands
             commands::start_python_server,
             commands::stop_python_server,
@@ -115,6 +179,12 @@ pub fn run() {
             data_load::from_excel,
             data_load::from_parquet,
             data_load::from_netcdf,
+            // Database commands (from db module)
+            db::get_databases,
+            db::get_tables,
+            db::drop_table,
+            db::truncate_table,
+            db::get_table_schema,
             // File operations commands
             file_operations::create_file,
             file_operations::create_folder,

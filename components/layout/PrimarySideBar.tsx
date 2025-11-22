@@ -2,6 +2,7 @@
 
 import { FileExplorer } from "@/components/features/filesystem/FileExplorer";
 import { ChatSessionsList } from "@/components/features/chat/ChatSessionsList";
+import { DatasetsList } from "@/components/features/project/DatasetsList";
 import { useLayout } from "@/hooks/use-layout";
 
 export function PrimarySideBar() {
@@ -12,6 +13,8 @@ export function PrimarySideBar() {
 		switch (activeView) {
 			case "chat":
 				return <ChatSessionsList />;
+			case "database":
+				return <DatasetsList />;
 			case "explorer":
 			default:
 				return (

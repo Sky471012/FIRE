@@ -1,6 +1,5 @@
-use duckdb::{params, Connection, Result};
+use duckdb::{Connection, Result};
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DatabaseInfo {
@@ -33,8 +32,7 @@ pub struct TableData {
 #[tauri::command]
 pub fn get_databases(
     project_path: String,
-) -> Result<Vec<DatabaseInfo>, Box<dyn std::error::Error>> {
-    let conn = Connection::open_in_memory()?;
+) -> Result<Vec<DatabaseInfo>, String> {
     let data_path = std::path::Path::new(&project_path).join("data");
     if !data_path.exists() {
         return Ok(Vec::new());
@@ -65,7 +63,7 @@ pub fn get_databases(
             }
         }
         Err(e) => {
-            return Err(format!("failed to read data directory: {}", e).into());
+            return Err(format!("failed to read data directory: {}", e));
         }
     }
     Ok(databases)
@@ -86,7 +84,7 @@ pub fn get_tables(db_path: String) -> Result<Vec<TableInfo>, String> {
         })
         .map_err(|e| format!("Failed to query tables: {}", e))?
         .map(|result| {
-            let table_name = result.map_err(|e| format!("Failed to get table name: {}", e))?;
+            let table_name: String = result.map_err(|e| format!("Failed to get table name: {}", e))?;
 
             let row_count: i64 = conn
                 .query_row(

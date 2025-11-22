@@ -171,7 +171,7 @@ pub fn get_project_name(path: String) -> Result<String, String> {
     let project_name = toml_value
         .get("project")
         .and_then(|p| p.get("name"))
-        .and_then(|n| n.as_str())
+        .and_then(|n: &toml::Value| n.as_str())
         .ok_or_else(|| "Project name not found in FIRE.toml".to_string())?
         .to_string();
 
