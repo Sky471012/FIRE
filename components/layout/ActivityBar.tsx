@@ -4,6 +4,7 @@ import {
 	BarChart3,
 	Database,
 	FolderTree,
+	MessageSquare,
 	Search,
 	Settings,
 } from "lucide-react";
@@ -24,6 +25,7 @@ export function ActivityBar() {
 		{ id: "search", icon: Search, label: "Global Search" },
 		{ id: "database", icon: Database, label: "Datasets" },
 		{ id: "analytics", icon: BarChart3, label: "Analytics" },
+		{ id: "chat", icon: MessageSquare, label: "AI Chat" },
 	];
 
 	return (

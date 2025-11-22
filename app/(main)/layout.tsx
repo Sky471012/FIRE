@@ -9,6 +9,7 @@ import { SecondarySideBar } from "@/components/layout/SecondarySideBar";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { TitleBar } from "@/components/layout/TitleBar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ChatProvider } from "@/components/providers/ChatProvider";
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -104,11 +105,12 @@ function MainLayoutContent({
 			enableSystem
 			disableTransitionOnChange
 		>
-			<TooltipProvider>
-				<div className="h-screen flex flex-col bg-background">
-					{isTauri && <TitleBar />}
-					<div className="flex flex-1 overflow-hidden">
-						<ActivityBar />
+			<ChatProvider>
+				<TooltipProvider>
+					<div className="h-screen flex flex-col bg-background">
+						{isTauri && <TitleBar />}
+						<div className="flex flex-1 overflow-hidden">
+							<ActivityBar />
 						<ResizablePanelGroup direction="horizontal" className="flex-1">
 							{/* Left Sidebar Panel (always mounted) */}
 							<ResizablePanel
@@ -165,6 +167,7 @@ function MainLayoutContent({
 				</div>
 				<Toaster />
 			</TooltipProvider>
+			</ChatProvider>
 		</ThemeProvider>
 	);
 }

@@ -62,23 +62,6 @@ fn write_log(level: &str, message: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Internal logging functions that can be called from Rust code
-pub fn internal_log_info(message: &str) {
-    let _ = write_log("INFO", message);
-}
-
-pub fn internal_log_warn(message: &str) {
-    let _ = write_log("WARN", message);
-}
-
-pub fn internal_log_error(message: &str) {
-    let _ = write_log("ERROR", message);
-}
-
-pub fn internal_log_debug(message: &str) {
-    let _ = write_log("DEBUG", message);
-}
-
 /// Log an info message
 #[tauri::command]
 pub fn log_info(message: String) -> Result<(), String> {
