@@ -6,6 +6,55 @@ use std::process::Command;
 use crate::utils::utils::get_fire_dir;
 use crate::utils::logger::{internal_log_info, internal_log_error, internal_log_debug};
 
+/// Show error dialog for UV installation requirement
+pub fn show_uv_installation_error(app_handle: &tauri::AppHandle) {
+    internal_log_info("Showing UV installation error dialog");
+
+    let app_handle_clone = app_handle.clone();
+
+    // Spawn in a separate thread to avoid blocking
+    std::thread::spawn(move || {
+        if let Err(e) = create_uv_error_dialog(&app_handle_clone) {
+            internal_log_error(&format!("Failed to create UV error dialog: {}", e));
+        }
+    });
+}
+
+/// Create the UV installation error dialog window
+fn create_uv_error_dialog(app_handle: &tauri::AppHandle) -> Result<()> {
+    use tauri::Manager;
+
+    // Check if a dialog already exists
+    if app_handle.get_webview_window("uv-error-dialog").is_some() {
+        internal_log_debug("UV error dialog already exists");
+        return Ok(());
+    }
+
+    let url = "/uv-error";
+    let title = "UV Installation Required";
+
+    let webview_url = tauri::WebviewUrl::App(url.into());
+
+    let _window = tauri::WebviewWindowBuilder::new(
+        app_handle,
+        "uv-error-dialog",
+        webview_url,
+    )
+    .title(title)
+    .inner_size(500.0, 300.0)
+    .resizable(false)
+    .maximizable(false)
+    .minimizable(false)
+    .center()
+    .always_on_top(true)
+    .skip_taskbar(true)
+    .build()
+    .context("Failed to create UV error dialog window")?;
+
+    internal_log_info("UV error dialog created");
+    Ok(())
+}
+
 /// Get the path to the pyproject.toml file
 fn get_pyproject_path() -> Result<PathBuf> {
     let fire_dir = get_fire_dir()?;
@@ -83,26 +132,50 @@ fn run_uv_sync() -> Result<()> {
     let output = Command::new("uv")
         .arg("sync")
         .current_dir(&fire_dir)
-        .output()
-        .context("Failed to execute 'uv sync' command. Is 'uv' installed and in PATH?")?;
+        .output();
 
-    if output.status.success() {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        if !stdout.is_empty() {
-            internal_log_debug(&format!("uv sync output: {}", stdout));
+    match output {
+        Err(e) => {
+            // Command execution failed - likely uv is not installed
+            if e.kind() == std::io::ErrorKind::NotFound {
+                internal_log_error("'uv' command not found - uv is not installed or not in PATH");
+                anyhow::bail!("UV_NOT_INSTALLED: uv command not found")
+            } else {
+                internal_log_error(&format!("Failed to execute uv command: {}", e));
+                anyhow::bail!("Failed to execute uv: {}", e)
+            }
         }
-        internal_log_info("✓ uv sync completed successfully");
-        Ok(())
-    } else {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        internal_log_error(&format!("uv sync stderr: {}", stderr));
+        Ok(output) => {
+            if output.status.success() {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if !stdout.is_empty() {
+                    internal_log_debug(&format!("uv sync output: {}", stdout));
+                }
+                internal_log_info("✓ uv sync completed successfully");
+                Ok(())
+            } else {
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                let stderr_lower = stderr.to_lowercase();
 
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        if !stdout.is_empty() {
-            internal_log_error(&format!("uv sync stdout: {}", stdout));
+                internal_log_error(&format!("uv sync stderr: {}", stderr));
+
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                if !stdout.is_empty() {
+                    internal_log_error(&format!("uv sync stdout: {}", stdout));
+                }
+
+                // Check if it's a network/internet error
+                if stderr_lower.contains("network")
+                    || stderr_lower.contains("connection")
+                    || stderr_lower.contains("timeout")
+                    || stderr_lower.contains("dns")
+                    || stderr_lower.contains("offline") {
+                    anyhow::bail!("NETWORK_ERROR: {}", stderr)
+                } else {
+                    anyhow::bail!("uv sync command failed with exit code: {:?}", output.status.code())
+                }
+            }
         }
-
-        anyhow::bail!("uv sync command failed with exit code: {:?}", output.status.code())
     }
 }
 

@@ -60,7 +60,21 @@ pub fn run() {
                         }
                     }
                     Err(e) => {
-                        logger::internal_log_error(&format!("Failed to initialize virtual environment: {}", e));
+                        let error_msg = e.to_string();
+                        logger::internal_log_error(&format!("Failed to initialize virtual environment: {}", error_msg));
+
+                        // Check if it's a UV not installed error (not a network error)
+                        if error_msg.contains("UV_NOT_INSTALLED") {
+                            logger::internal_log_error("UV is not installed - showing error dialog");
+                            venv_manager::show_uv_installation_error(&app.handle());
+                        } else if !error_msg.contains("NETWORK_ERROR") {
+                            // Show error dialog for other non-network errors too
+                            logger::internal_log_error("UV command failed - showing error dialog");
+                            venv_manager::show_uv_installation_error(&app.handle());
+                        } else {
+                            logger::internal_log_error("Network error - skipping UV installation dialog");
+                        }
+
                         logger::internal_log_error("Application will continue, but Python features may not work");
                     }
                 }
