@@ -165,7 +165,8 @@ def ensure_db_schema(data_path: str):
             CREATE TABLE IF NOT EXISTS sessions (
                 id VARCHAR PRIMARY KEY,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                summary TEXT
+                summary TEXT,
+                title TEXT
             )
             """
         )
@@ -188,11 +189,53 @@ def ensure_db_schema(data_path: str):
         except Exception:
             # Column already exists, skip
             pass
+        # Add title column to sessions if it doesn't exist (migration)
+        try:
+            conn.execute("ALTER TABLE sessions ADD COLUMN title TEXT")
+        except Exception:
+            # Column already exists, skip
+            pass
 
 # ---------- Helpers ----------
 def new_memory():
     """Create a fresh summary memory buffer (lightweight)."""
     return SimpleSummaryMemory(max_messages=20)
+
+
+def generate_chat_title(first_message: str) -> str:
+    """Generate a concise, descriptive title for the chat based on the first user message."""
+    from config import GROQ_API_KEY
+    from langchain_groq import ChatGroq
+    from langchain_core.messages import HumanMessage, SystemMessage
+    
+    try:
+        model = ChatGroq(temperature=0.3, model="openai/gpt-oss-120b", api_key=GROQ_API_KEY)
+        system_prompt = """Generate a short, concise title (3-6 words) for a chat conversation based on the user's first message. 
+The title should capture the main topic or intent. Return ONLY the title, nothing else.
+Examples:
+- "Show me temperature trends" -> "Temperature Trends Analysis"
+- "What is oceanography?" -> "Oceanography Introduction"
+- "Plot salinity vs depth" -> "Salinity Depth Visualization"
+- "How to install pandas?" -> "Pandas Installation Guide"
+"""
+        
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Generate a title for this message: {first_message}")
+        ]
+        
+        response = model.invoke(messages)
+        title = response.content.strip().strip('"').strip("'")
+        
+        # Limit to 60 characters
+        if len(title) > 60:
+            title = title[:57] + "..."
+            
+        return title if title else "New Chat"
+    except Exception:
+        # Fallback: use first 50 chars of the message
+        fallback = first_message.strip()[:50]
+        return fallback + "..." if len(first_message) > 50 else fallback
 
 
 def load_memory_from_db(session_id: str, data_path: str):
@@ -237,8 +280,8 @@ async def create_session(req: NewSessionRequest):
 async def list_sessions(data_path: str):
     ensure_db_schema(data_path)
     with duckdb.connect(chat_history_db_path(data_path)) as conn:
-        rows = conn.execute("SELECT id, created_at FROM sessions ORDER BY created_at DESC").fetchall()
-    return {"sessions": [{"id": r[0], "created_at": str(r[1])} for r in rows]}
+        rows = conn.execute("SELECT id, created_at, title FROM sessions ORDER BY created_at DESC").fetchall()
+    return {"sessions": [{"id": r[0], "created_at": str(r[1]), "title": r[2] or "New Chat"} for r in rows]}
 
 @app.get("/sessions/{session_id}/history")
 async def get_history(session_id: str, data_path: str):
@@ -277,8 +320,14 @@ async def chat(req: ChatRequest):
         session_exists = conn.execute(
             "SELECT COUNT(*) FROM sessions WHERE id=?", [req.session_id]
         ).fetchone()[0]
-    if not session_exists:
-        raise HTTPException(status_code=404, detail="Session not found")
+        if not session_exists:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Check if this is the first message in the session
+        message_count = conn.execute(
+            "SELECT COUNT(*) FROM messages WHERE session_id=?", [req.session_id]
+        ).fetchone()[0]
+        is_first_message = (message_count == 0)
 
     # 2️⃣ Load session memory (messages + summary)
     memory = load_memory_from_db(req.session_id, req.data_path)
@@ -343,6 +392,18 @@ async def chat(req: ChatRequest):
             "INSERT INTO messages (session_id, role, content, visualization_spec) VALUES (?, ?, ?, ?)",
             [req.session_id, "assistant", final_answer.content, viz_spec_json]
         )
+        
+        # Generate and save chat title if this is the first message
+        if is_first_message:
+            try:
+                chat_title = generate_chat_title(req.message)
+                conn.execute(
+                    "UPDATE sessions SET title=? WHERE id=?",
+                    [chat_title, req.session_id]
+                )
+            except Exception:
+                # If title generation fails, continue without it
+                pass
         
         # Update session summary
         conn.execute(

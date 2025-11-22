@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub struct ChatSession {
     pub id: String,
     pub created_at: String,
+    pub title: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -25,7 +26,8 @@ fn ensure_chat_db_schema(conn: &Connection) -> Result<(), String> {
         "CREATE TABLE IF NOT EXISTS sessions (
             id VARCHAR PRIMARY KEY,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            summary TEXT
+            summary TEXT,
+            title TEXT
         )",
         [],
     )
@@ -49,6 +51,9 @@ fn ensure_chat_db_schema(conn: &Connection) -> Result<(), String> {
 
     // Add visualization_spec column if it doesn't exist (migration)
     let _ = conn.execute("ALTER TABLE messages ADD COLUMN visualization_spec TEXT", []);
+
+    // Add title column to sessions if it doesn't exist (migration)
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN title TEXT", []);
 
     Ok(())
 }
@@ -89,7 +94,7 @@ pub fn get_chat_sessions(data_path: String) -> Result<Vec<ChatSession>, String> 
     ensure_chat_db_schema(&conn)?;
 
     let mut stmt = conn
-        .prepare("SELECT id, CAST(created_at AS VARCHAR) as created_at FROM sessions ORDER BY created_at DESC")
+        .prepare("SELECT id, CAST(created_at AS VARCHAR) as created_at, title FROM sessions ORDER BY created_at DESC")
         .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
     let sessions = stmt
@@ -97,6 +102,7 @@ pub fn get_chat_sessions(data_path: String) -> Result<Vec<ChatSession>, String> 
             Ok(ChatSession {
                 id: row.get(0)?,
                 created_at: row.get(1)?,
+                title: row.get(2)?,
             })
         })
         .map_err(|e| format!("Failed to query sessions: {}", e))?

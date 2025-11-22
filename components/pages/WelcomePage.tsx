@@ -442,7 +442,7 @@ export function WelcomePage() {
 															<MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
 															<div className="flex-1 min-w-0">
 																<p className="font-medium text-sm truncate">
-																	Chat Session
+																	{session.title || "New Chat"}
 																</p>
 																<p className="text-xs text-muted-foreground truncate">
 																	{session.id.substring(0, 8)}...
@@ -486,7 +486,7 @@ export function WelcomePage() {
 											</div>
 											<div className="flex-1 min-w-0">
 												<p className="font-medium text-sm truncate">
-													Chat Session
+													{session.title || "New Chat"}
 												</p>
 												<p className="text-xs text-muted-foreground truncate">
 													{session.id.substring(0, 8)}...

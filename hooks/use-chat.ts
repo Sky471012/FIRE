@@ -13,6 +13,7 @@ export interface ChatMessage {
 export interface ChatSession {
 	id: string;
 	created_at: string;
+	title?: string;
 }
 
 export interface VisualizationSpec {
@@ -273,6 +274,9 @@ export const useChat = create<ChatState>((set, get) => ({
 			if (data.visualization_spec) {
 				set({ visualizationSpec: data.visualization_spec });
 			}
+
+			// Reload sessions to update the title (if this was the first message)
+			await get().loadSessions();
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to send message";

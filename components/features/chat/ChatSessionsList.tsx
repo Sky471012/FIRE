@@ -162,7 +162,7 @@ export function ChatSessionsList() {
 								</div>
 								<div className="flex-1 min-w-0">
 									<p className="text-xs font-medium truncate mb-0.5">
-										Chat Session
+										{session.title || "New Chat"}
 									</p>
 									<p className="text-[10px] opacity-60 truncate">
 										{formatDistanceToNow(new Date(session.created_at), {
