@@ -4,13 +4,19 @@ import "@/styles/globals.css";
 import type * as React from "react";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/sonner";
 import { useWindowState } from "@/hooks/use-window-state";
 
 function SettingsContent({ children }: { children: React.ReactNode }) {
 	// Initialize window state management for settings window
 	useWindowState("settings");
 
-	return <TooltipProvider>{children}</TooltipProvider>;
+	return (
+		<TooltipProvider>
+			{children}
+			<Toaster />
+		</TooltipProvider>
+	);
 }
 
 export default function SettingsLayout({

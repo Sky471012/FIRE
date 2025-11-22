@@ -15,11 +15,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { useProject } from "@/hooks/use-project";
+import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 
 export function WelcomePage() {
 	const { openProject, createProject, recentProjects, openRecentProject } =
 		useProject();
+	const { settings } = useSettings();
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -129,7 +131,9 @@ export function WelcomePage() {
 							</div>
 						</div>
 						<h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-							Welcome to FIRE
+							{settings?.general.user_name
+								? `Welcome ${settings.general.user_name}`
+								: "Welcome to FIRE"}
 						</h1>
 						<p className="text-lg text-muted-foreground">
 							Fast Interactive Research Environment

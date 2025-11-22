@@ -78,6 +78,8 @@ pub fn run() {
             commands::get_window_state,
             commands::save_window_state,
             commands::remove_window_state,
+            commands::update_general_settings,
+            commands::update_appearance_settings,
             // Workspace commands
             commands::get_workspace_state,
             commands::save_workspace_state,

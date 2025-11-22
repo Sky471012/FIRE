@@ -56,3 +56,39 @@ pub fn remove_window_state(state: State<AppState>, label: String) -> Result<(), 
         .map_err(|e| format!("Failed to save global settings: {}", e))
 }
 
+#[tauri::command]
+pub fn update_general_settings(
+    state: State<AppState>,
+    user_name: String,
+) -> Result<(), String> {
+    let mut settings = state
+        .global_settings
+        .lock()
+        .map_err(|e| format!("Failed to lock global settings: {}", e))?;
+
+    settings.general.user_name = user_name;
+
+    settings
+        .save()
+        .map_err(|e| format!("Failed to save global settings: {}", e))
+}
+
+#[tauri::command]
+pub fn update_appearance_settings(
+    state: State<AppState>,
+    theme: String,
+    font_size: u32,
+) -> Result<(), String> {
+    let mut settings = state
+        .global_settings
+        .lock()
+        .map_err(|e| format!("Failed to lock global settings: {}", e))?;
+
+    settings.appearance.theme = theme;
+    settings.appearance.font_size = font_size;
+
+    settings
+        .save()
+        .map_err(|e| format!("Failed to save global settings: {}", e))
+}
+

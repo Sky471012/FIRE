@@ -56,7 +56,50 @@ impl WindowState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AppearanceSettings {
+    #[serde(default = "default_theme")]
+    pub theme: String,
+    #[serde(default = "default_font_size")]
+    pub font_size: u32,
+}
+
+fn default_theme() -> String {
+    "system".to_string()
+}
+
+fn default_font_size() -> u32 {
+    14
+}
+
+impl Default for AppearanceSettings {
+    fn default() -> Self {
+        Self {
+            theme: default_theme(),
+            font_size: default_font_size(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GeneralSettings {
+    #[serde(default)]
+    pub user_name: String,
+}
+
+impl Default for GeneralSettings {
+    fn default() -> Self {
+        Self {
+            user_name: String::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalSettings {
+    #[serde(default)]
+    pub general: GeneralSettings,
+    #[serde(default)]
+    pub appearance: AppearanceSettings,
     #[serde(flatten)]
     pub windows: HashMap<String, WindowState>,
 }
@@ -65,7 +108,11 @@ impl Default for GlobalSettings {
     fn default() -> Self {
         let mut windows = HashMap::new();
         windows.insert("main".to_string(), WindowState::main_default());
-        Self { windows }
+        Self {
+            general: GeneralSettings::default(),
+            appearance: AppearanceSettings::default(),
+            windows,
+        }
     }
 }
 
@@ -99,8 +146,11 @@ impl GlobalSettings {
             .context("Failed to parse global_settings.toml")?;
 
         let mut windows = HashMap::new();
+        let mut general = GeneralSettings::default();
+        let mut appearance = AppearanceSettings::default();
 
         if let toml::Value::Table(table) = toml_value {
+            // Parse window states
             if let Some(toml::Value::Table(window_table)) = table.get("window") {
                 for (key, value) in window_table.iter() {
                     if let Ok(window_state) = toml::from_str::<WindowState>(&toml::to_string(value)?) {
@@ -108,23 +158,56 @@ impl GlobalSettings {
                     }
                 }
             }
+
+            // Parse general settings
+            if let Some(value) = table.get("general") {
+                if let Ok(parsed_general) = toml::from_str::<GeneralSettings>(&toml::to_string(value)?) {
+                    general = parsed_general;
+                }
+            }
+
+            // Parse appearance settings
+            if let Some(value) = table.get("appearance") {
+                if let Ok(parsed_appearance) = toml::from_str::<AppearanceSettings>(&toml::to_string(value)?) {
+                    appearance = parsed_appearance;
+                }
+            }
         }
 
         if windows.is_empty() {
-            return Ok(Self::default());
+            windows.insert("main".to_string(), WindowState::main_default());
         }
 
-        Ok(Self { windows })
+        Ok(Self {
+            general,
+            appearance,
+            windows,
+        })
     }
 
     /// Save global settings to disk
     pub fn save(&self) -> Result<()> {
         let path = Self::get_path()?;
 
-        // Create a nested structure for TOML: [window.{label}]
+        // Create a nested structure for TOML
         let mut table = toml::map::Map::new();
-        let mut window_table = toml::map::Map::new();
 
+        // Add general settings
+        let general_str = toml::to_string(&self.general)
+            .context("Failed to serialize general settings")?;
+        let general_value: toml::Value = toml::from_str(&general_str)
+            .context("Failed to parse general settings as TOML value")?;
+        table.insert("general".to_string(), general_value);
+
+        // Add appearance settings
+        let appearance_str = toml::to_string(&self.appearance)
+            .context("Failed to serialize appearance settings")?;
+        let appearance_value: toml::Value = toml::from_str(&appearance_str)
+            .context("Failed to parse appearance settings as TOML value")?;
+        table.insert("appearance".to_string(), appearance_value);
+
+        // Add window states
+        let mut window_table = toml::map::Map::new();
         for (label, state) in &self.windows {
             let state_str = toml::to_string(state)
                 .context("Failed to serialize window state")?;
