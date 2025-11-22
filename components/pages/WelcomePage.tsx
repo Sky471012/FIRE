@@ -2,6 +2,7 @@
 
 import { open } from "@tauri-apps/plugin-dialog";
 import {
+	ChevronDown,
 	Folder,
 	FolderOpen,
 	FolderPlus,
@@ -21,6 +22,14 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useChat } from "@/hooks/use-chat";
 import { useLayout } from "@/hooks/use-layout";
 import { useProject } from "@/hooks/use-project";
@@ -206,30 +215,30 @@ export function WelcomePage() {
 
 	return (
 		<>
-			<div className="h-full flex items-center justify-center bg-background p-8">
-				<div className="w-full max-w-4xl space-y-12">
-					{/* Header */}
-					<div className="text-center space-y-4">
-						<div className="flex justify-center mb-6">
-							<div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden border border-primary/10">
-								<Image
-									src="/icon.png"
-									alt="TIRE Icon"
-									width={56}
-									height={56}
-									className="object-contain"
-								/>
+			<div className="h-full flex items-start justify-center bg-background overflow-y-auto pointer-events-none p-8 pt-12 pb-8">
+				<div className="w-full max-w-4xl space-y-8 flex-shrink-0 pointer-events-auto">
+						{/* Header */}
+						<div className="text-center space-y-4">
+							<div className="flex justify-center mb-6">
+								<div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden border border-primary/10">
+									<Image
+										src="/icon.png"
+										alt="TIRE Icon"
+										width={56}
+										height={56}
+										className="object-contain"
+									/>
+								</div>
 							</div>
+							<h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+								{settings?.general.user_name
+									? `Welcome ${settings.general.user_name}`
+									: "Welcome to TIRE"}
+							</h1>
+							<p className="text-lg text-muted-foreground">
+								Turbo Integrated Research Environment
+							</p>
 						</div>
-						<h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
-							{settings?.general.user_name
-								? `Welcome ${settings.general.user_name}`
-								: "Welcome to TIRE"}
-						</h1>
-						<p className="text-lg text-muted-foreground">
-							Turbo Integrated Research Environment
-						</p>
-					</div>
 
 					{/* Action Cards */}
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -310,9 +319,54 @@ export function WelcomePage() {
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						{/* Recent Projects */}
 						<div className="space-y-4">
-							<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-								Recent Projects
-							</h2>
+							<div className="flex items-center justify-between">
+								<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+									Recent Projects
+								</h2>
+								{recentProjects.length > 4 && (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+											>
+												More
+												<ChevronDown className="h-3 w-3" />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end" className="w-80">
+											<DropdownMenuLabel>All Recent Projects</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											<div className="max-h-96 overflow-y-auto">
+												{recentProjects.map((project) => (
+													<DropdownMenuItem
+														key={project.path}
+														onClick={() => handleOpenRecent(project.path)}
+														disabled={isLoading}
+														className="cursor-pointer"
+													>
+														<div className="flex items-center gap-3 w-full">
+															<Folder className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+															<div className="flex-1 min-w-0">
+																<p className="font-medium text-sm truncate">
+																	{getProjectName(project.path)}
+																</p>
+																<p className="text-xs text-muted-foreground truncate">
+																	{project.path}
+																</p>
+															</div>
+															<span className="text-xs text-muted-foreground flex-shrink-0">
+																{formatDate(project.last_accessed)}
+															</span>
+														</div>
+													</DropdownMenuItem>
+												))}
+											</div>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)}
+							</div>
 							<div className="space-y-2">
 								{recentProjects.length === 0 ? (
 									<div className="p-8 text-center text-sm text-muted-foreground">
@@ -323,7 +377,7 @@ export function WelcomePage() {
 										</p>
 									</div>
 								) : (
-									recentProjects.slice(0, 5).map((project) => (
+									recentProjects.slice(0, 4).map((project) => (
 										<button
 											key={project.path}
 											type="button"
@@ -357,9 +411,54 @@ export function WelcomePage() {
 
 						{/* Recent Chats */}
 						<div className="space-y-4">
-							<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-								Recent Chats
-							</h2>
+							<div className="flex items-center justify-between">
+								<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+									Recent Chats
+								</h2>
+								{sessions.length > 4 && (
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<Button
+												variant="ghost"
+												size="sm"
+												className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+											>
+												More
+												<ChevronDown className="h-3 w-3" />
+											</Button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="end" className="w-80">
+											<DropdownMenuLabel>All Recent Chats</DropdownMenuLabel>
+											<DropdownMenuSeparator />
+											<div className="max-h-96 overflow-y-auto">
+												{sessions.map((session) => (
+													<DropdownMenuItem
+														key={session.id}
+														onClick={() => handleOpenRecentChat(session.id)}
+														disabled={isLoading}
+														className="cursor-pointer"
+													>
+														<div className="flex items-center gap-3 w-full">
+															<MessageSquare className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+															<div className="flex-1 min-w-0">
+																<p className="font-medium text-sm truncate">
+																	Chat Session
+																</p>
+																<p className="text-xs text-muted-foreground truncate">
+																	{session.id.substring(0, 8)}...
+																</p>
+															</div>
+															<span className="text-xs text-muted-foreground flex-shrink-0">
+																{formatDate(session.created_at)}
+															</span>
+														</div>
+													</DropdownMenuItem>
+												))}
+											</div>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								)}
+							</div>
 							<div className="space-y-2">
 								{sessions.length === 0 ? (
 									<div className="p-8 text-center text-sm text-muted-foreground">
@@ -370,7 +469,7 @@ export function WelcomePage() {
 										</p>
 									</div>
 								) : (
-									sessions.slice(0, 5).map((session) => (
+									sessions.slice(0, 4).map((session) => (
 										<button
 											key={session.id}
 											type="button"

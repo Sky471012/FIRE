@@ -63,42 +63,8 @@ function MainLayoutContent({
 		lastNonZeroRightSize,
 	} = useSidebar();
 
-	// State for modal overlay
-	const [showModalOverlay, setShowModalOverlay] = useState(false);
-
 	// Initialize window state management for main window
 	useWindowState("main");
-
-	// Listen for modal overlay events from Tauri
-	useEffect(() => {
-		if (!isTauri) return;
-
-		const setupListeners = async () => {
-			const { listen } = await import("@tauri-apps/api/event");
-
-			const showUnlisten = await listen("show-modal-overlay", () => {
-				setShowModalOverlay(true);
-			});
-
-			const hideUnlisten = await listen("hide-modal-overlay", () => {
-				setShowModalOverlay(false);
-			});
-
-			return () => {
-				showUnlisten();
-				hideUnlisten();
-			};
-		};
-
-		let cleanup: (() => void) | undefined;
-		setupListeners().then((fn) => {
-			cleanup = fn;
-		});
-
-		return () => {
-			cleanup?.();
-		};
-	}, [isTauri]);
 
 	const leftRef = useRef<
 		ImperativePanelHandle & { resize?: (size: number) => void }
@@ -143,38 +109,34 @@ function MainLayoutContent({
 			<ThemeSyncProvider>
 				<ChatProvider>
 					<TooltipProvider>
-						<div className="h-screen flex flex-col bg-background relative">
-							{/* Modal overlay - prevents interaction when child window is open */}
-							{showModalOverlay && (
-								<div
-									className="absolute inset-0 z-[9999] bg-black/20 backdrop-blur-[1px]"
-									style={{ pointerEvents: "all" }}
-								/>
-							)}
+						<div className="h-screen flex flex-col bg-background">
 							{isTauri && <TitleBar />}
 							<div className="flex flex-1 overflow-hidden">
 								<ActivityBar />
 								<ResizablePanelGroup direction="horizontal" className="flex-1">
-									{/* Left Sidebar Panel (always mounted) */}
-									<ResizablePanel
-										ref={leftRef}
-										id="primary-sidebar"
-										defaultSize={leftSize}
-										minSize={10}
-										maxSize={40}
-										collapsible
-										collapsedSize={0}
-										onResize={(size) => {
-											setLeftSize(size);
-											// close/open based on whether we've resized to 0
-											setLeftOpen(size > 0);
-										}}
-										className={`${isLeftSidebarOpen ? "visible" : "hidden"}`}
-									>
-										<PrimarySideBar />
-									</ResizablePanel>
+									{/* Left Sidebar Panel */}
+									{isLeftSidebarOpen && (
+										<>
+											<ResizablePanel
+												ref={leftRef}
+												id="primary-sidebar"
+												defaultSize={leftSize}
+												minSize={10}
+												maxSize={40}
+												collapsible
+												collapsedSize={0}
+												onResize={(size) => {
+													setLeftSize(size);
+													// close/open based on whether we've resized to 0
+													setLeftOpen(size > 0);
+												}}
+											>
+												<PrimarySideBar />
+											</ResizablePanel>
 
-									{isLeftSidebarOpen && <ResizableHandle withHandle />}
+											<ResizableHandle withHandle />
+										</>
+									)}
 
 									{/* Main Content Panel */}
 									<ResizablePanel
@@ -185,25 +147,28 @@ function MainLayoutContent({
 										<main className="h-full overflow-hidden">{children}</main>
 									</ResizablePanel>
 
-									{isRightSidebarOpen && <ResizableHandle withHandle />}
+									{/* Right Sidebar Panel */}
+									{isRightSidebarOpen && (
+										<>
+											<ResizableHandle withHandle />
 
-									{/* Right Sidebar Panel (always mounted) */}
-									<ResizablePanel
-										ref={rightRef}
-										id="secondary-sidebar"
-										defaultSize={rightSize}
-										minSize={10}
-										maxSize={40}
-										collapsible
-										collapsedSize={0}
-										onResize={(size) => {
-											setRightSize(size);
-											setRightOpen(size > 0);
-										}}
-										className={`${isRightSidebarOpen ? "visible" : "hidden"}`}
-									>
-										<SecondarySideBar />
-									</ResizablePanel>
+											<ResizablePanel
+												ref={rightRef}
+												id="secondary-sidebar"
+												defaultSize={rightSize}
+												minSize={10}
+												maxSize={40}
+												collapsible
+												collapsedSize={0}
+												onResize={(size) => {
+													setRightSize(size);
+													setRightOpen(size > 0);
+												}}
+											>
+												<SecondarySideBar />
+											</ResizablePanel>
+										</>
+									)}
 								</ResizablePanelGroup>
 							</div>
 							<StatusBar />
