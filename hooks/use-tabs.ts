@@ -8,12 +8,14 @@ export interface Tab {
 	isDirty?: boolean;
 	isPinned?: boolean;
 	content?: React.ReactNode;
+	filePath?: string;
+	isBinary?: boolean;
 }
 
 interface TabsState {
 	tabs: Tab[];
 	activeTabId: string | null;
-	addTab: (tab: Omit<Tab, "id">) => void;
+	addTab: (tab: Omit<Tab, "id">) => string;
 	removeTab: (id: string) => void;
 	setActiveTab: (id: string) => void;
 	updateTab: (id: string, updates: Partial<Tab>) => void;
@@ -42,6 +44,7 @@ export const useTabs = create<TabsState>((set, get) => ({
 			tabs: [...state.tabs, newTab],
 			activeTabId: id,
 		}));
+		return id;
 	},
 
 	removeTab: (id) => {

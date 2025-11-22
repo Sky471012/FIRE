@@ -58,12 +58,7 @@ export function FileContextMenu({
 	return (
 		<ContextMenu>
 			<ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-			<ContextMenuContent
-				className="w-56"
-				onOpenAutoFocus={() => {
-					console.log("[FileContextMenu] Menu opened");
-				}}
-			>
+			<ContextMenuContent className="w-56">
 				{entry && !entry.is_directory && onOpenFile && (
 					<>
 						<ContextMenuItem onClick={onOpenFile}>

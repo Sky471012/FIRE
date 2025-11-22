@@ -1,5 +1,5 @@
-import { WelcomePage } from "@/components/pages/WelcomePage";
+import { TabContent } from "@/components/features/tabs/TabContent";
 
 export default function Home() {
-	return <WelcomePage />;
+	return <TabContent />;
 }

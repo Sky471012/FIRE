@@ -9,6 +9,7 @@ import {
 	ContextMenuSeparator,
 	ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { DynamicIcon } from "@/components/ui/dynamic-icon";
 import { type Tab as TabType, useTabs } from "@/hooks/use-tabs";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +68,14 @@ export function Tab({ tab, isActive }: TabProps) {
 					{/* Tab content */}
 					{!tab.isPinned && (
 						<>
+							{/* Icon */}
+							{tab.icon && (
+								<DynamicIcon
+									name={tab.icon}
+									className="h-3.5 w-3.5 flex-shrink-0"
+								/>
+							)}
+
 							{/* Dirty indicator */}
 							{tab.isDirty && (
 								<Circle className="h-2 w-2 fill-current flex-shrink-0" />

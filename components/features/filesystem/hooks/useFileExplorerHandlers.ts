@@ -1,7 +1,9 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
 import { useFileSystem } from "@/hooks/use-filesystem";
+import { useTabs } from "@/hooks/use-tabs";
 import { fileSystemApi } from "@/lib/filesystem-api";
+import { getFileIcon } from "@/lib/file-icons";
 import type { FileSystemEntry } from "@/types/filesystem";
 
 export function useFileExplorerHandlers(
@@ -29,6 +31,8 @@ export function useFileExplorerHandlers(
 		toggleFolder,
 		showHiddenFiles,
 	} = useFileSystem();
+
+	const { addTab, tabs, setActiveTab } = useTabs();
 
 	const loadChildEntries = useCallback(
 		async (parent: FileSystemEntry) => {
@@ -167,11 +171,25 @@ export function useFileExplorerHandlers(
 					loadChildEntries(entry);
 				}
 			} else {
-				toast.info(`Opening file: ${entry.name}`);
-				// TODO: Implement file opening in a viewer/editor
+				// Check if tab already exists for this file
+				const existingTab = tabs.find((tab) => tab.filePath === entry.path);
+
+				if (existingTab) {
+					// Switch to existing tab
+					setActiveTab(existingTab.id);
+				} else {
+					// Create new tab with file icon
+					addTab({
+						title: entry.name,
+						icon: getFileIcon(entry.name),
+						filePath: entry.path,
+						isDirty: false,
+						isPinned: false,
+					});
+				}
 			}
 		},
-		[expandedFolders, toggleFolder, loadChildEntries],
+		[expandedFolders, toggleFolder, loadChildEntries, tabs, addTab, setActiveTab],
 	);
 
 	return {
