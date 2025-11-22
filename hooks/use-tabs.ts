@@ -38,6 +38,18 @@ export const useTabs = create<TabsState>((set, get) => ({
 	activeTabId: "welcome",
 
 	addTab: (tab) => {
+		const state = get();
+
+		// Check if a tab with the same filePath already exists
+		if (tab.filePath) {
+			const existingTab = state.tabs.find((t) => t.filePath === tab.filePath);
+			if (existingTab) {
+				// Switch to existing tab instead of creating a new one
+				set({ activeTabId: existingTab.id });
+				return existingTab.id;
+			}
+		}
+
 		const id = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 		const newTab = { ...tab, id };
 		set((state) => ({
@@ -52,6 +64,24 @@ export const useTabs = create<TabsState>((set, get) => ({
 		const tabIndex = state.tabs.findIndex((tab) => tab.id === id);
 		if (tabIndex === -1) return;
 
+		// Don't allow closing the last tab
+		if (state.tabs.length === 1) {
+			// If trying to close the last tab, open Welcome tab
+			set({
+				tabs: [
+					{
+						id: "welcome",
+						title: "Welcome",
+						icon: "Flame",
+						isPinned: false,
+						isDirty: false,
+					},
+				],
+				activeTabId: "welcome",
+			});
+			return;
+		}
+
 		const newTabs = state.tabs.filter((tab) => tab.id !== id);
 		let newActiveId = state.activeTabId;
 
@@ -63,7 +93,20 @@ export const useTabs = create<TabsState>((set, get) => ({
 					newActiveId = newTabs[newTabs.length - 1].id;
 				}
 			} else {
-				newActiveId = null;
+				// If no tabs remain, open Welcome tab
+				set({
+					tabs: [
+						{
+							id: "welcome",
+							title: "Welcome",
+							icon: "Flame",
+							isPinned: false,
+							isDirty: false,
+						},
+					],
+					activeTabId: "welcome",
+				});
+				return;
 			}
 		}
 
@@ -83,7 +126,19 @@ export const useTabs = create<TabsState>((set, get) => ({
 	},
 
 	closeAllTabs: () => {
-		set({ tabs: [], activeTabId: null });
+		// Instead of closing all tabs, keep the Welcome tab open
+		set({
+			tabs: [
+				{
+					id: "welcome",
+					title: "Welcome",
+					icon: "Flame",
+					isPinned: false,
+					isDirty: false,
+				},
+			],
+			activeTabId: "welcome",
+		});
 	},
 
 	closeOtherTabs: (id) => {

@@ -171,25 +171,17 @@ export function useFileExplorerHandlers(
 					loadChildEntries(entry);
 				}
 			} else {
-				// Check if tab already exists for this file
-				const existingTab = tabs.find((tab) => tab.filePath === entry.path);
-
-				if (existingTab) {
-					// Switch to existing tab
-					setActiveTab(existingTab.id);
-				} else {
-					// Create new tab with file icon
-					addTab({
-						title: entry.name,
-						icon: getFileIcon(entry.name),
-						filePath: entry.path,
-						isDirty: false,
-						isPinned: false,
-					});
-				}
+				// addTab will handle duplicate checking and switching to existing tab if needed
+				addTab({
+					title: entry.name,
+					icon: getFileIcon(entry.name),
+					filePath: entry.path,
+					isDirty: false,
+					isPinned: false,
+				});
 			}
 		},
-		[expandedFolders, toggleFolder, loadChildEntries, tabs, addTab, setActiveTab],
+		[expandedFolders, toggleFolder, loadChildEntries, addTab],
 	);
 
 	return {

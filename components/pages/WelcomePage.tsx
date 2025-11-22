@@ -1,189 +1,245 @@
 "use client";
 
-import {
-	BarChart3,
-	Clock,
-	Database,
-	FileText,
-	FileUp,
-	FolderOpen,
-} from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
+import { Folder, FolderOpen, FolderPlus } from "lucide-react";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+	AlertDialog,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { useProject } from "@/hooks/use-project";
+import { cn } from "@/lib/utils";
 
 export function WelcomePage() {
-	const quickActions = [
-		{
-			icon: FileUp,
-			title: "Import Data",
-			description: "Upload CSV, Excel, or NetCDF files",
-			color: "text-blue-600",
-			bgColor: "bg-blue-50 dark:bg-blue-950/30",
-		},
-		{
-			icon: Database,
-			title: "New Query",
-			description: "Execute SQL queries on your datasets",
-			color: "text-green-600",
-			bgColor: "bg-green-50 dark:bg-green-950/30",
-		},
-		{
-			icon: FolderOpen,
-			title: "Open Project",
-			description: "Browse and open existing projects",
-			color: "text-purple-600",
-			bgColor: "bg-purple-50 dark:bg-purple-950/30",
-		},
-		{
-			icon: BarChart3,
-			title: "Create Dashboard",
-			description: "Visualize your data with charts",
-			color: "text-orange-600",
-			bgColor: "bg-orange-50 dark:bg-orange-950/30",
-		},
-	];
+	const { openProject, createProject, recentProjects, openRecentProject } =
+		useProject();
+	const [error, setError] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
 
-	const recentFiles = [
-		{
-			name: "climate_data.csv",
-			type: "CSV",
-			size: "2.4 MB",
-			modified: "2 hours ago",
-		},
-		{
-			name: "emissions.xlsx",
-			type: "Excel",
-			size: "1.8 MB",
-			modified: "Yesterday",
-		},
-		{
-			name: "analysis_results.nc",
-			type: "NetCDF",
-			size: "5.2 MB",
-			modified: "2 days ago",
-		},
-	];
+	const handleOpenFolder = async () => {
+		try {
+			setIsLoading(true);
+			const selected = await open({
+				directory: true,
+				multiple: false,
+				title: "Select Project Folder",
+			});
+
+			if (selected) {
+				await openProject(selected);
+				toast.success("Project opened successfully");
+			}
+		} catch (error) {
+			console.error("Error opening project:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to open project";
+			setError(errorMessage);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleNewFolder = async () => {
+		try {
+			setIsLoading(true);
+			const selected = await open({
+				directory: true,
+				multiple: false,
+				title: "Select Empty Folder for New Project",
+			});
+
+			if (selected) {
+				await createProject(selected);
+				toast.success("Project created successfully");
+			}
+		} catch (error) {
+			console.error("Error creating new project:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : "Failed to create project";
+			setError(errorMessage);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleOpenRecent = async (path: string) => {
+		try {
+			setIsLoading(true);
+			await openRecentProject(path);
+			toast.success("Project opened successfully");
+		} catch (error) {
+			console.error("Error opening recent project:", error);
+			const errorMessage =
+				error instanceof Error
+					? error.message
+					: "Failed to open recent project";
+			setError(errorMessage);
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const formatDate = (dateStr: string) => {
+		try {
+			const date = new Date(dateStr);
+			const now = new Date();
+			const diffMs = now.getTime() - date.getTime();
+			const diffMins = Math.floor(diffMs / 60000);
+			const diffHours = Math.floor(diffMs / 3600000);
+			const diffDays = Math.floor(diffMs / 86400000);
+
+			if (diffMins < 1) return "Just now";
+			if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`;
+			if (diffHours < 24)
+				return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`;
+			if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`;
+
+			return date.toLocaleDateString();
+		} catch {
+			return dateStr;
+		}
+	};
+
+	const getProjectName = (path: string) => {
+		return path.split(/[\\/]/).pop() || path;
+	};
 
 	return (
-		<div className="h-full p-6 space-y-6 overflow-auto bg-background">
-			{/* Welcome, Section */}
-			<div className="space-y-2">
-				<div className="flex items-center gap-3">
-					<div className="h-10 w-10 rounded flex items-center justify-center overflow-hidden">
-						<Image
-							src="/icon.png"
-							alt="FIRE Icon"
-							width={40}
-							height={40}
-							className="object-contain"
-						/>
-					</div>
-					<div>
-						<h1 className="text-2xl font-semibold tracking-tight">
+		<>
+			<div className="h-full flex items-center justify-center bg-background p-8">
+				<div className="w-full max-w-4xl space-y-12">
+					{/* Header */}
+					<div className="text-center space-y-4">
+						<div className="flex justify-center mb-6">
+							<div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden border border-primary/10">
+								<Image
+									src="/icon.png"
+									alt="FIRE Icon"
+									width={56}
+									height={56}
+									className="object-contain"
+								/>
+							</div>
+						</div>
+						<h1 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
 							Welcome to FIRE
 						</h1>
-						<p className="text-sm text-muted-foreground">
+						<p className="text-lg text-muted-foreground">
 							Fast Interactive Research Environment
 						</p>
 					</div>
-				</div>
-			</div>
 
-			{/* Quick Actions */}
-			<div>
-				<h2 className="text-sm font-semibold mb-3 flex items-center gap-2 text-muted-foreground uppercase tracking-wide">
-					Quick Actions
-				</h2>
-				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-					{quickActions.map((action) => (
-						<Card
-							key={action.title}
-							className="group hover:border-primary/50 transition-colors cursor-pointer"
+					{/* Action Cards */}
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<button
+							type="button"
+							onClick={handleOpenFolder}
+							disabled={isLoading}
+							className={cn(
+								"group relative overflow-hidden rounded-2xl border-2 border-border/50 bg-card p-8 text-left transition-all",
+								"hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
+								"active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0",
+							)}
 						>
-							<CardHeader className="pb-3 space-y-2">
-								<div
-									className={`h-10 w-10 rounded ${action.bgColor} flex items-center justify-center`}
-								>
-									<action.icon className={`h-5 w-5 ${action.color}`} />
+							<div className="relative z-10 space-y-4">
+								<div className="h-14 w-14 rounded-xl bg-blue-500/10 flex items-center justify-center ring-1 ring-blue-500/20 group-hover:ring-blue-500/40 transition-all">
+									<FolderOpen className="h-7 w-7 text-blue-500" />
 								</div>
-								<CardTitle className="text-sm font-medium">
-									{action.title}
-								</CardTitle>
-								<CardDescription className="text-xs">
-									{action.description}
-								</CardDescription>
-							</CardHeader>
-						</Card>
-					))}
+								<div>
+									<h3 className="text-xl font-semibold mb-2">Open Folder</h3>
+									<p className="text-sm text-muted-foreground">
+										Browse and open an existing project folder
+									</p>
+								</div>
+							</div>
+							<div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+						</button>
+
+						<button
+							type="button"
+							onClick={handleNewFolder}
+							disabled={isLoading}
+							className={cn(
+								"group relative overflow-hidden rounded-2xl border-2 border-border/50 bg-card p-8 text-left transition-all",
+								"hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
+								"active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0",
+							)}
+						>
+							<div className="relative z-10 space-y-4">
+								<div className="h-14 w-14 rounded-xl bg-green-500/10 flex items-center justify-center ring-1 ring-green-500/20 group-hover:ring-green-500/40 transition-all">
+									<FolderPlus className="h-7 w-7 text-green-500" />
+								</div>
+								<div>
+									<h3 className="text-xl font-semibold mb-2">New Folder</h3>
+									<p className="text-sm text-muted-foreground">
+										Create a new project in an empty folder
+									</p>
+								</div>
+							</div>
+							<div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+						</button>
+					</div>
+
+					{/* Recent Projects */}
+					{recentProjects.length > 0 && (
+						<div className="space-y-4">
+							<h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+								Recent Projects
+							</h2>
+							<div className="space-y-2">
+								{recentProjects.slice(0, 5).map((project) => (
+									<button
+										key={project.path}
+										type="button"
+										onClick={() => handleOpenRecent(project.path)}
+										disabled={isLoading}
+										className={cn(
+											"w-full group flex items-center gap-4 p-4 rounded-xl border border-border/50 bg-card text-left transition-all",
+											"hover:border-primary/30 hover:bg-accent/50 hover:shadow-md hover:-translate-y-0.5",
+											"active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0",
+										)}
+									>
+										<div className="h-10 w-10 rounded-lg bg-muted/50 flex items-center justify-center flex-shrink-0 group-hover:bg-primary/10 transition-colors">
+											<Folder className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+										</div>
+										<div className="flex-1 min-w-0">
+											<p className="font-medium text-sm truncate">
+												{getProjectName(project.path)}
+											</p>
+											<p className="text-xs text-muted-foreground truncate">
+												{project.path}
+											</p>
+										</div>
+										<div className="text-xs text-muted-foreground flex-shrink-0">
+											{formatDate(project.last_accessed)}
+										</div>
+									</button>
+								))}
+							</div>
+						</div>
+					)}
 				</div>
 			</div>
 
-			{/* Recent Files */}
-			<div>
-				<h2 className="text-sm font-semibold mb-3 flex items-center gap-2 text-muted-foreground uppercase tracking-wide">
-					Recent Files
-				</h2>
-				<Card>
-					<CardContent className="p-0">
-						<div className="divide-y divide-border">
-							{recentFiles.map((file) => (
-								<div
-									key={`${file.name}-${file.modified}`}
-									className="p-3 hover:bg-accent transition-colors cursor-pointer flex items-center justify-between group"
-								>
-									<div className="flex items-center gap-3">
-										<FileText className="h-4 w-4 text-muted-foreground" />
-										<div>
-											<p className="font-medium text-sm">{file.name}</p>
-											<div className="flex items-center gap-2 mt-0.5">
-												<Badge variant="secondary" className="text-xs">
-													{file.type}
-												</Badge>
-												<span className="text-xs text-muted-foreground">
-													{file.size}
-												</span>
-											</div>
-										</div>
-									</div>
-									<div className="flex items-center gap-2 text-xs text-muted-foreground">
-										<Clock className="h-3 w-3" />
-										<span>{file.modified}</span>
-									</div>
-								</div>
-							))}
-						</div>
-					</CardContent>
-				</Card>
-			</div>
-
-			{/* Getting Started */}
-			<Card className="border-primary/30 bg-primary/5">
-				<CardHeader>
-					<CardTitle className="text-base">Getting Started</CardTitle>
-					<CardDescription>
-						New to FIRE? Here are some helpful resources
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-2">
-					<Button variant="outline" className="w-full justify-start" size="sm">
-						📚 View Documentation
-					</Button>
-					<Button variant="outline" className="w-full justify-start" size="sm">
-						🎓 Tutorial: Import Your First Dataset
-					</Button>
-					<Button variant="outline" className="w-full justify-start" size="sm">
-						💡 Tips & Tricks
-					</Button>
-				</CardContent>
-			</Card>
-		</div>
+			{/* Error Dialog */}
+			<AlertDialog open={!!error} onOpenChange={() => setError(null)}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Error</AlertDialogTitle>
+						<AlertDialogDescription>{error}</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<Button onClick={() => setError(null)}>OK</Button>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+		</>
 	);
 }
