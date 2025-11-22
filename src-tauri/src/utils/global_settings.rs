@@ -95,11 +95,27 @@ impl Default for GeneralSettings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConfigSettings {
+    #[serde(default)]
+    pub venv: bool,
+}
+
+impl Default for ConfigSettings {
+    fn default() -> Self {
+        Self {
+            venv: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GlobalSettings {
     #[serde(default)]
     pub general: GeneralSettings,
     #[serde(default)]
     pub appearance: AppearanceSettings,
+    #[serde(default)]
+    pub config: ConfigSettings,
     #[serde(flatten)]
     pub windows: HashMap<String, WindowState>,
 }
@@ -111,6 +127,7 @@ impl Default for GlobalSettings {
         Self {
             general: GeneralSettings::default(),
             appearance: AppearanceSettings::default(),
+            config: ConfigSettings::default(),
             windows,
         }
     }
@@ -148,6 +165,7 @@ impl GlobalSettings {
         let mut windows = HashMap::new();
         let mut general = GeneralSettings::default();
         let mut appearance = AppearanceSettings::default();
+        let mut config = ConfigSettings::default();
 
         if let toml::Value::Table(table) = toml_value {
             // Parse window states
@@ -172,6 +190,13 @@ impl GlobalSettings {
                     appearance = parsed_appearance;
                 }
             }
+
+            // Parse config settings
+            if let Some(value) = table.get("config") {
+                if let Ok(parsed_config) = toml::from_str::<ConfigSettings>(&toml::to_string(value)?) {
+                    config = parsed_config;
+                }
+            }
         }
 
         if windows.is_empty() {
@@ -181,6 +206,7 @@ impl GlobalSettings {
         Ok(Self {
             general,
             appearance,
+            config,
             windows,
         })
     }
@@ -205,6 +231,13 @@ impl GlobalSettings {
         let appearance_value: toml::Value = toml::from_str(&appearance_str)
             .context("Failed to parse appearance settings as TOML value")?;
         table.insert("appearance".to_string(), appearance_value);
+
+        // Add config settings
+        let config_str = toml::to_string(&self.config)
+            .context("Failed to serialize config settings")?;
+        let config_value: toml::Value = toml::from_str(&config_str)
+            .context("Failed to parse config settings as TOML value")?;
+        table.insert("config".to_string(), config_value);
 
         // Add window states
         let mut window_table = toml::map::Map::new();
@@ -248,6 +281,16 @@ impl GlobalSettings {
     /// Remove window state for a specific window label
     pub fn remove_window_state(&mut self, label: &str) {
         self.windows.remove(label);
+    }
+
+    /// Get the venv configuration status
+    pub fn get_venv_configured(&self) -> bool {
+        self.config.venv
+    }
+
+    /// Set the venv configuration status
+    pub fn set_venv_configured(&mut self, configured: bool) {
+        self.config.venv = configured;
     }
 }
 

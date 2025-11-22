@@ -5,6 +5,7 @@ pub mod db;
 pub mod file_operations;
 pub mod utils;
 mod venv_extractor;
+mod venv_manager;
 
 use tauri::Manager;
 use utils::logger;
@@ -27,9 +28,48 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .manage(commands::AppState::new())
         .setup(|app| {
+            let app_state = app.state::<commands::AppState>();
+
+            logger::internal_log_info("Starting application setup...");
+
+            // Initialize Python virtual environment on startup
+            {
+                logger::internal_log_info("Checking Python virtual environment...");
+
+                let venv_configured = {
+                    let global_settings = app_state.global_settings.lock()
+                        .expect("Failed to lock global settings");
+                    let configured = global_settings.get_venv_configured();
+                    logger::internal_log_debug(&format!("Current config.venv = {}", configured));
+                    configured
+                };
+
+                match venv_manager::initialize_venv(venv_configured) {
+                    Ok(was_initialized) => {
+                        if was_initialized {
+                            // Reacquire lock to update config
+                            let mut global_settings = app_state.global_settings.lock()
+                                .expect("Failed to lock global settings");
+                            global_settings.set_venv_configured(true);
+
+                            if let Err(e) = global_settings.save() {
+                                logger::internal_log_error(&format!("Failed to save venv configuration: {}", e));
+                            } else {
+                                logger::internal_log_info("✓ Updated config.venv = true in global_settings.toml");
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        logger::internal_log_error(&format!("Failed to initialize virtual environment: {}", e));
+                        logger::internal_log_error("Application will continue, but Python features may not work");
+                    }
+                }
+            }
+
+            logger::internal_log_debug("Setting up main window...");
+
             // Setup main window with saved settings
             if let Some(main_window) = app.get_webview_window("main") {
-                let app_state = app.state::<commands::AppState>();
 
                 // Load window state in a separate scope to drop the mutex guard
                 let window_state = {
@@ -58,8 +98,13 @@ pub fn run() {
 
                 // Show window after applying settings
                 let _ = main_window.show();
+
+                logger::internal_log_info("✓ Main window configured and shown");
+            } else {
+                logger::internal_log_warn("Main window not found!");
             }
 
+            logger::internal_log_info("✓ Application setup complete");
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
