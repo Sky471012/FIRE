@@ -3,6 +3,7 @@
 import { PanelLeft, PanelRight, Plus } from "lucide-react";
 import { ProjectDropdown } from "@/components/features/project";
 import { Tab } from "@/components/features/tabs";
+import { TransfersButton } from "@/components/features/transfers/TransfersButton";
 import { WindowControls } from "@/components/features/window";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useTabs } from "@/hooks/use-tabs";
@@ -86,6 +87,11 @@ export function TitleBar() {
 				>
 					<PanelRight className="h-3.5 w-3.5" />
 				</button>
+			</div>
+
+			{/* File Transfers */}
+			<div className="flex items-center flex-shrink-0 border-l border-border/50 px-2">
+				<TransfersButton />
 			</div>
 
 			{/* Right: Window controls */}

@@ -1,8 +1,8 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "fire",
+	"productName": "tire",
 	"version": "0.1.0",
-	"identifier": "com.decode.fire",
+	"identifier": "com.decode.tire",
 	"build": {
 		"beforeDevCommand": "pnpm dev",
 		"devUrl": "http://localhost:3000",
@@ -13,7 +13,7 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "fire",
+				"title": "tire",
 				"width": 800,
 				"height": 600,
 				"resizable": true,

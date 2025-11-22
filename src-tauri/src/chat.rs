@@ -40,11 +40,15 @@ fn ensure_chat_db_schema(conn: &Connection) -> Result<(), String> {
             session_id VARCHAR,
             role VARCHAR,
             content TEXT,
+            visualization_spec TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )",
         [],
     )
     .map_err(|e| format!("Failed to create messages table: {}", e))?;
+
+    // Add visualization_spec column if it doesn't exist (migration)
+    let _ = conn.execute("ALTER TABLE messages ADD COLUMN visualization_spec TEXT", []);
 
     Ok(())
 }
@@ -115,15 +119,27 @@ pub fn get_chat_history(session_id: String, data_path: String) -> Result<Vec<Cha
     ensure_chat_db_schema(&conn)?;
 
     let mut stmt = conn
-        .prepare("SELECT role, content, CAST(created_at AS VARCHAR) as created_at FROM messages WHERE session_id = ? ORDER BY created_at ASC")
+        .prepare("SELECT role, content, CAST(created_at AS VARCHAR) as created_at, visualization_spec FROM messages WHERE session_id = ? ORDER BY created_at ASC")
         .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
     let messages = stmt
         .query_map([&session_id], |row| {
+            let role: String = row.get(0)?;
+            let mut content: String = row.get(1)?;
+            let created_at: String = row.get(2)?;
+            let viz_spec: Option<String> = row.get(3).ok();
+
+            // If visualization_spec exists, embed it in the content as a JSON block
+            if let Some(viz_json) = viz_spec {
+                if !viz_json.is_empty() {
+                    content = format!("{}\n\n```json\n{}\n```", content, viz_json);
+                }
+            }
+
             Ok(ChatMessage {
-                role: row.get(0)?,
-                content: row.get(1)?,
-                created_at: row.get(2)?,
+                role,
+                content,
+                created_at,
             })
         })
         .map_err(|e| format!("Failed to query messages: {}", e))?

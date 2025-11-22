@@ -113,7 +113,7 @@ pub fn initialize_project(path: String) -> Result<(), String> {
         .unwrap_or("Untitled Project")
         .to_string();
 
-    // Create FIRE.toml file with just the name field
+    // Create TIRE.toml file with just the name field
     let toml_content = format!(
         r#"[project]
 name = "{}"
@@ -121,9 +121,9 @@ name = "{}"
         project_name
     );
 
-    let toml_path = project_path.join("FIRE.toml");
+    let toml_path = project_path.join("TIRE.toml");
     fs::write(&toml_path, toml_content)
-        .map_err(|e| format!("Failed to create FIRE.toml: {}", e))?;
+        .map_err(|e| format!("Failed to create TIRE.toml: {}", e))?;
 
     Ok(())
 }
@@ -138,8 +138,8 @@ pub fn is_valid_project(path: String) -> Result<bool, String> {
         return Ok(false);
     }
 
-    // Check if FIRE.toml exists
-    let toml_path = project_path.join("FIRE.toml");
+    // Check if TIRE.toml exists
+    let toml_path = project_path.join("TIRE.toml");
     Ok(toml_path.exists() && toml_path.is_file())
 }
 
@@ -154,25 +154,25 @@ pub fn get_project_name(path: String) -> Result<String, String> {
         return Err("Project directory does not exist".to_string());
     }
 
-    let toml_path = project_path.join("FIRE.toml");
+    let toml_path = project_path.join("TIRE.toml");
 
     if !toml_path.exists() {
-        return Err("FIRE.toml not found".to_string());
+        return Err("TIRE.toml not found".to_string());
     }
 
     // Read and parse the TOML file
     let toml_content = fs::read_to_string(&toml_path)
-        .map_err(|e| format!("Failed to read FIRE.toml: {}", e))?;
+        .map_err(|e| format!("Failed to read TIRE.toml: {}", e))?;
 
     let toml_value: toml::Value = toml::from_str(&toml_content)
-        .map_err(|e| format!("Failed to parse FIRE.toml: {}", e))?;
+        .map_err(|e| format!("Failed to parse TIRE.toml: {}", e))?;
 
     // Extract project name
     let project_name = toml_value
         .get("project")
         .and_then(|p| p.get("name"))
         .and_then(|n: &toml::Value| n.as_str())
-        .ok_or_else(|| "Project name not found in FIRE.toml".to_string())?
+        .ok_or_else(|| "Project name not found in TIRE.toml".to_string())?
         .to_string();
 
     Ok(project_name)

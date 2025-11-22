@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::fs;
 
-use super::utils::{get_fire_dir, read_config_file, write_config_file};
+use super::utils::{get_tire_dir, read_config_file, write_config_file};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CameraState {
@@ -66,8 +66,8 @@ impl Default for WorkspaceState {
 impl WorkspaceState {
     /// Get the path to the legacy global workspace state file (deprecated)
     fn get_legacy_path() -> Result<PathBuf> {
-        let fire_dir = get_fire_dir()?;
-        Ok(fire_dir.join("workspace.json"))
+        let tire_dir = get_tire_dir()?;
+        Ok(tire_dir.join("workspace.json"))
     }
 
     /// Load workspace state from disk (legacy global method), or return defaults if file doesn't exist

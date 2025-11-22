@@ -93,6 +93,14 @@ const MessageWithVisualizationComponent: React.FC<MessageWithVisualizationProps>
 }) => {
   const parsed = useMemo(() => parseMessageContent(content), [content]);
   
+  // Debug logging
+  React.useEffect(() => {
+    if (parsed.visualizationSpec) {
+      console.log('[MessageWithVisualization] Visualization spec found:', parsed.visualizationSpec);
+      console.log('[MessageWithVisualization] Project path:', projectPath);
+    }
+  }, [parsed.visualizationSpec, projectPath]);
+  
   return (
     <>
       {/* Render markdown text */}
@@ -104,12 +112,24 @@ const MessageWithVisualizationComponent: React.FC<MessageWithVisualizationProps>
       )}
       
       {/* Render chart if visualization_spec exists */}
-      {parsed.visualizationSpec && projectPath && (
+      {parsed.visualizationSpec && (
         <div className="mt-4">
-          <ChartRenderer 
-            spec={parsed.visualizationSpec}
-            projectPath={projectPath}
-          />
+          {projectPath ? (
+            <ChartRenderer 
+              spec={parsed.visualizationSpec}
+              projectPath={projectPath}
+            />
+          ) : (
+            <div className="border border-yellow-500/50 bg-yellow-500/10 rounded-lg p-4 text-sm">
+              <p className="font-medium text-yellow-600 dark:text-yellow-400 mb-2">
+                Visualization available but project not loaded
+              </p>
+              <p className="text-muted-foreground text-xs">
+                A chart was generated for this message, but it cannot be displayed because no project is currently loaded.
+                Please open or create a project to view visualizations.
+              </p>
+            </div>
+          )}
         </div>
       )}
     </>

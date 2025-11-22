@@ -177,10 +177,17 @@ def ensure_db_schema(data_path: str):
                 session_id VARCHAR,
                 role VARCHAR,
                 content TEXT,
+                visualization_spec TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
         )
+        # Add visualization_spec column if it doesn't exist (migration)
+        try:
+            conn.execute("ALTER TABLE messages ADD COLUMN visualization_spec TEXT")
+        except Exception:
+            # Column already exists, skip
+            pass
 
 # ---------- Helpers ----------
 def new_memory():
@@ -327,13 +334,14 @@ async def chat(req: ChatRequest):
     with duckdb.connect(chat_history_db_path(req.data_path)) as conn:
         # Save user message
         conn.execute(
-            "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
+            "INSERT INTO messages (session_id, role, content, visualization_spec) VALUES (?, ?, ?, NULL)",
             [req.session_id, "user", req.message]
         )
-        # Save AI response
+        # Save AI response with visualization spec (if any)
+        viz_spec_json = json.dumps(visualization_spec) if visualization_spec else None
         conn.execute(
-            "INSERT INTO messages (session_id, role, content) VALUES (?, ?, ?)",
-            [req.session_id, "assistant", final_answer.content]
+            "INSERT INTO messages (session_id, role, content, visualization_spec) VALUES (?, ?, ?, ?)",
+            [req.session_id, "assistant", final_answer.content, viz_spec_json]
         )
         
         # Update session summary
@@ -342,16 +350,33 @@ async def chat(req: ChatRequest):
             [memory.moving_summary_buffer, req.session_id]
         )
 
-        # Reload full history for response
+        # Reload full history for response with visualization specs
         history = conn.execute(
-            "SELECT role, content FROM messages WHERE session_id=? ORDER BY created_at ASC",
+            "SELECT role, content, visualization_spec FROM messages WHERE session_id=? ORDER BY created_at ASC",
             [req.session_id]
         ).fetchall()
+
+    # Build history with embedded visualization specs
+    history_with_viz = []
+    for r in history:
+        role, content, viz_spec_json = r[0], r[1], r[2]
+        # If this message has a viz spec, embed it in the content as a JSON block
+        if viz_spec_json:
+            try:
+                viz_obj = json.loads(viz_spec_json)
+                # Append viz spec as a JSON code block that the frontend parser can find
+                content_with_viz = f"{content}\n\n```json\n{json.dumps(viz_obj, indent=2)}\n```"
+                history_with_viz.append({"role": role, "content": content_with_viz})
+            except Exception:
+                # If parsing fails, just use original content
+                history_with_viz.append({"role": role, "content": content})
+        else:
+            history_with_viz.append({"role": role, "content": content})
 
     return ChatResponse(
         session_id=req.session_id,
         answer=final_answer.content,
-        history=[{"role": r[0], "content": r[1]} for r in history],
+        history=history_with_viz,
         visualization_spec=visualization_spec,
     )
 

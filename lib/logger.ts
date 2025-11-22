@@ -4,7 +4,7 @@ type level = "info" | "warn" | "error" | "debug";
 const isTauri = typeof window !== "undefined" && window.isTauri;
 
 /**
- * Logger utility for logging messages to ~/.fire/temp/session_datetime.log
+ * Logger utility for logging messages to ~/.tire/temp/session_datetime.log
  */
 class Logger {
 	/**

@@ -1,3 +1,4 @@
+mod auth;
 mod chat;
 pub mod commands;
 pub mod data_load;
@@ -247,7 +248,17 @@ pub fn run() {
             chat::get_chat_history,
             chat::delete_chat_session,
             // System commands
-            commands::get_system_stats
+            commands::get_system_stats,
+            // Auth commands
+            auth::sign_up,
+            auth::confirm_sign_up,
+            auth::sign_in,
+            auth::sign_out,
+            auth::get_current_user,
+            auth::send_file_to_user,
+            auth::check_incoming_transfers,
+            auth::accept_transfer,
+            auth::reject_transfer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

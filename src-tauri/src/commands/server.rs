@@ -98,15 +98,15 @@ pub async fn start_python_server(state: State<'_, AppState>) -> Result<String, S
         .parent()
         .ok_or_else(|| "Failed to get server directory".to_string())?;
 
-    // Get the Python executable from ~/.fire/.venv (for both dev and production)
-    let fire_dir = crate::utils::utils::get_fire_dir()
-        .map_err(|e| format!("Failed to get .fire directory: {}", e))?;
+    // Get the Python executable from ~/.tire/.venv (for both dev and production)
+    let tire_dir = crate::utils::utils::get_tire_dir()
+        .map_err(|e| format!("Failed to get .tire directory: {}", e))?;
 
     #[cfg(target_os = "windows")]
-    let venv_python = fire_dir.join(".venv").join("Scripts").join("python.exe");
+    let venv_python = tire_dir.join(".venv").join("Scripts").join("python.exe");
 
     #[cfg(not(target_os = "windows"))]
-    let venv_python = fire_dir.join(".venv").join("bin").join("python");
+    let venv_python = tire_dir.join(".venv").join("bin").join("python");
 
     if !venv_python.exists() {
         return Err(format!(

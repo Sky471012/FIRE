@@ -2,20 +2,20 @@ use anyhow::{Context, Result};
 use std::fs;
 use std::path::PathBuf;
 
-/// Get the .fire directory path in the user's home directory
-pub fn get_fire_dir() -> Result<PathBuf> {
+/// Get the .tire directory path in the user's home directory
+pub fn get_tire_dir() -> Result<PathBuf> {
     let home_dir = dirs::home_dir().context("Failed to determine home directory")?;
 
-    let fire_dir = home_dir.join(".fire");
+    let tire_dir = home_dir.join(".tire");
 
     // Create the directory if it doesn't exist
-    if !fire_dir.exists() {
-        fs::create_dir_all(&fire_dir).context("Failed to create .fire directory")?;
+    if !tire_dir.exists() {
+        fs::create_dir_all(&tire_dir).context("Failed to create .tire directory")?;
     } else {
-        println!(".fire directory already exists");
+        println!(".tire directory already exists");
     }
 
-    Ok(fire_dir)
+    Ok(tire_dir)
 }
 
 /// Read a file and return its contents as a String

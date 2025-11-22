@@ -1,10 +1,13 @@
 "use client";
 
+import { invoke } from "@tauri-apps/api/core";
 import { Palette, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { AuthDialog } from "@/components/features/auth/AuthDialog";
 import { ChildWindowControls } from "@/components/features/window/ChildWindowControls";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,6 +33,9 @@ export default function SettingsPage() {
 	const [userName, setUserName] = useState("");
 	const [showStatusBar, setShowStatusBar] = useState(true);
 	const [statusBarRefreshMs, setStatusBarRefreshMs] = useState("2000");
+	const [currentUser, setCurrentUser] = useState<string | null>(null);
+	const [authDialogOpen, setAuthDialogOpen] = useState(false);
+	const [checkingUser, setCheckingUser] = useState(true);
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const statusBarDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -43,6 +49,38 @@ export default function SettingsPage() {
 			);
 		}
 	}, [settings]);
+
+	// Check for logged-in user on mount
+	useEffect(() => {
+		checkCurrentUser();
+	}, []);
+
+	const checkCurrentUser = async () => {
+		setCheckingUser(true);
+		try {
+			const user = await invoke<string | null>("get_current_user");
+			setCurrentUser(user);
+		} catch (error) {
+			console.error("Failed to check current user:", error);
+			setCurrentUser(null);
+		} finally {
+			setCheckingUser(false);
+		}
+	};
+
+	const handleLogout = async () => {
+		try {
+			await invoke<string>("sign_out");
+			setCurrentUser(null);
+			toast.success("Logged out successfully");
+		} catch (error) {
+			toast.error(`Logout failed: ${error}`);
+		}
+	};
+
+	const handleAuthSuccess = () => {
+		checkCurrentUser();
+	};
 
 	const handleUserNameChange = useCallback(
 		(value: string) => {
@@ -237,6 +275,52 @@ export default function SettingsPage() {
 												</p>
 											</div>
 										</div>
+
+										<Separator />
+
+										<div className="space-y-4">
+											<div>
+												<h3 className="text-lg font-semibold mb-1">
+													Cloud Account
+												</h3>
+												<p className="text-sm text-muted-foreground">
+													Connect your cloud account for P2P file sharing
+												</p>
+											</div>
+
+											{checkingUser ? (
+												<Skeleton className="h-10 w-64" />
+											) : currentUser ? (
+												<div className="flex items-center justify-between max-w-md">
+													<div className="space-y-0.5">
+														<p className="text-sm font-medium">
+															Logged in as <span className="text-primary">@{currentUser}</span>
+														</p>
+														<p className="text-xs text-muted-foreground">
+															You can send files to other users
+														</p>
+													</div>
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={handleLogout}
+													>
+														Logout
+													</Button>
+												</div>
+											) : (
+												<div className="flex items-center gap-4">
+													<Button
+														onClick={() => setAuthDialogOpen(true)}
+													>
+														Login / Sign Up
+													</Button>
+													<p className="text-xs text-muted-foreground">
+														Create an account to enable cloud features
+													</p>
+												</div>
+											)}
+										</div>
 									</div>
 								)}
 
@@ -245,7 +329,7 @@ export default function SettingsPage() {
 										<div>
 											<h2 className="text-2xl font-bold">Appearance</h2>
 											<p className="text-sm text-muted-foreground">
-												Customize how FIRE looks on your device
+												Customize how TIRE looks on your device
 											</p>
 										</div>
 
@@ -332,6 +416,13 @@ export default function SettingsPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* Auth Dialog */}
+			<AuthDialog
+				open={authDialogOpen}
+				onOpenChange={setAuthDialogOpen}
+				onSuccess={handleAuthSuccess}
+			/>
 		</div>
 	);
 }

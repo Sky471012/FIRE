@@ -419,7 +419,7 @@ app = workflow.compile()
 # ===============================
 # 5. CHAT LOOP
 # ===============================
-def run_chat():
+def run_chat(): 
     print("--- 🚀 Argo AI Agent ---")
     print("Ask questions about Argo data. Type 'exit' to quit.")
 

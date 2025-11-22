@@ -5,13 +5,44 @@ import ReactECharts from "echarts-for-react";
 import "echarts-gl";
 import type { VisualizationSpec, QueryResult } from "../../../types/visualization";
 import { invoke } from "@tauri-apps/api/core";
+import { useTheme } from "next-themes";
 
 interface ChartRendererProps {
   spec: VisualizationSpec;
   projectPath: string;
 }
 
+// Theme-aware color schemes for scientific charts
+const getThemeColors = (theme: string | undefined) => {
+  const isDark = theme === 'dark';
+  
+  return {
+    // Background colors
+    background: isDark ? '#1a1a2e' : '#ffffff',
+    chartBackground: isDark ? 'rgba(26, 26, 46, 0.3)' : 'rgba(255, 255, 255, 1)',
+    
+    // Text colors
+    titleColor: isDark ? '#e0e0e0' : '#1a1a1a',
+    labelColor: isDark ? '#b0b0b0' : '#4a5568',
+    axisColor: isDark ? '#b0b0b0' : '#718096',
+    
+    // Grid and axis lines
+    gridLineColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+    axisLineColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)',
+    
+    // Data colors - scientific palette
+    seriesColors: isDark 
+      ? ['#5B8FF9', '#61DDAA', '#F6BD16', '#E8684A', '#9270CA', '#5AD8A6', '#FF9845']
+      : ['#1e6bb8', '#059669', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#ea580c'],
+    
+    // Tooltip
+    tooltipBg: isDark ? 'rgba(50, 50, 70, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+    tooltipBorder: isDark ? 'rgba(100, 100, 130, 0.8)' : 'rgba(200, 200, 200, 0.8)',
+  };
+};
+
 const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
+  const { theme } = useTheme();
   const [data, setData] = useState<QueryResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,6 +81,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
   const chartOption = useMemo(() => {
     if (!data || !data.data.length) return {};
 
+    const colors = getThemeColors(theme);
     const { columns, data: rows } = data;
     const xIndex = columns.indexOf(spec.x);
     const yIndices = spec.y.map((col: string) => columns.indexOf(col));
@@ -69,32 +101,39 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
           name: spec.y[i],
           type: "line" as const,
           data: rows.map((row: string[]) => parseFloat(row[yIdx]) || 0),
-          showSymbol: rowCount <= 100, // Only show symbols for small datasets
+          showSymbol: rowCount <= 100,
           symbolSize: rowCount <= 100 ? 6 : 0,
-          sampling: "lttb" as const, // Largest-Triangle-Three-Buckets downsampling
-          progressive: 5000, // Progressive rendering threshold
+          sampling: "lttb" as const,
+          progressive: 5000,
           progressiveThreshold: 3000,
-          animation: rowCount <= 1000, // Disable animation for large datasets
+          animation: rowCount <= 1000,
           lineStyle: {
-            width: rowCount > 1000 ? 1 : 2, // Thinner lines for large datasets
+            width: rowCount > 1000 ? 1 : 2,
+          },
+          itemStyle: {
+            color: colors.seriesColors[i % colors.seriesColors.length],
           },
         }));
 
-        // Calculate smart label interval based on dataset size - very aggressive for large datasets
         const maxLabels = rowCount > 2000 ? 10 : rowCount > 1000 ? 15 : rowCount > 500 ? 20 : 30;
         const interval = Math.max(0, Math.ceil(xData.length / maxLabels) - 1);
 
         return {
+          color: colors.seriesColors,
+          backgroundColor: colors.chartBackground,
           title: {
             text: spec.title || "Line Chart",
             left: "center",
-            textStyle: { color: "#e0e0e0", fontSize: 16, fontWeight: "bold" },
+            textStyle: { color: colors.titleColor, fontSize: 16, fontWeight: "bold" },
           },
           tooltip: {
             trigger: "axis",
+            backgroundColor: colors.tooltipBg,
+            borderColor: colors.tooltipBorder,
+            textStyle: { color: colors.titleColor },
             axisPointer: {
               type: "cross",
-              lineStyle: { type: "dashed", width: 1 },
+              lineStyle: { type: "dashed", width: 1, color: colors.axisLineColor },
             },
             formatter: (params: any) => {
               if (!Array.isArray(params)) return "";
@@ -106,19 +145,29 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               return lines.join("<br/>");
             },
           },
-          legend: { data: spec.y, top: 30, textStyle: { color: "#e0e0e0" } },
-          grid: { left: "10%", right: "10%", bottom: "15%", top: "15%" },
+          legend: { 
+            data: spec.y, 
+            top: 30, 
+            textStyle: { color: colors.labelColor } 
+          },
+          grid: { 
+            left: "10%", 
+            right: "10%", 
+            bottom: "15%", 
+            top: "15%",
+            borderColor: colors.gridLineColor,
+          },
           xAxis: {
             type: "category",
             data: xData,
             name: spec.x_label || spec.x,
-            nameTextStyle: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
             axisLabel: {
               rotate: 45,
               interval: interval,
-              color: "#b0b0b0",
+              color: colors.labelColor,
               formatter: (value: string) => {
-                // For large datasets, truncate long labels
                 if (rowCount > 1000 && value.length > 10) {
                   return value.substring(0, 10) + "...";
                 }
@@ -126,20 +175,24 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               },
             },
             axisTick: {
-              interval: interval, // Match tick interval with labels
+              interval: interval,
+              lineStyle: { color: colors.axisLineColor },
             },
+            splitLine: { show: true, lineStyle: { color: colors.gridLineColor } },
           },
           yAxis: {
             type: "value",
             name: spec.y_label || spec.y.join(", "),
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            axisLabel: { color: colors.labelColor },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           dataZoom: [
             { 
               type: "inside", 
               start: 0, 
-              end: rowCount > 1000 ? 10 : 100, // Show only 10% initially for large datasets
+              end: rowCount > 1000 ? 10 : 100,
               zoomOnMouseWheel: true,
               moveOnMouseMove: true,
             },
@@ -149,6 +202,8 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               end: rowCount > 1000 ? 10 : 100,
               height: 30,
               bottom: 10,
+              textStyle: { color: colors.labelColor },
+              borderColor: colors.axisLineColor,
             },
           ],
           series,
@@ -161,24 +216,34 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
           name: spec.y[i],
           type: "bar" as const,
           data: rows.map((row: string[]) => parseFloat(row[yIdx]) || 0),
-          animation: rowCount <= 1000, // Disable animation for large datasets
-          large: rowCount > 1000, // Enable large data optimization
+          animation: rowCount <= 1000,
+          large: rowCount > 1000,
           largeThreshold: 1000,
+          itemStyle: {
+            color: colors.seriesColors[i % colors.seriesColors.length],
+          },
         }));
 
-        // Calculate smart label interval for bar graphs - very aggressive for large datasets
         const maxLabels = rowCount > 2000 ? 8 : rowCount > 1000 ? 12 : rowCount > 500 ? 18 : 30;
         const interval = Math.max(0, Math.ceil(xData.length / maxLabels) - 1);
 
         return {
+          color: colors.seriesColors,
+          backgroundColor: colors.chartBackground,
           title: {
             text: spec.title || "Bar Graph",
             left: "center",
-            textStyle: { color: "#e0e0e0", fontSize: 16, fontWeight: "bold" },
+            textStyle: { color: colors.titleColor, fontSize: 16, fontWeight: "bold" },
           },
           tooltip: {
             trigger: "axis",
-            axisPointer: { type: "shadow" },
+            backgroundColor: colors.tooltipBg,
+            borderColor: colors.tooltipBorder,
+            textStyle: { color: colors.titleColor },
+            axisPointer: { 
+              type: "shadow",
+              shadowStyle: { color: colors.gridLineColor },
+            },
             formatter: (params: any) => {
               if (!Array.isArray(params)) return "";
               const lines = [`<strong>${params[0].axisValue}</strong>`];
@@ -189,19 +254,29 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               return lines.join("<br/>");
             },
           },
-          legend: { data: spec.y, top: 30, textStyle: { color: "#e0e0e0" } },
-          grid: { left: "10%", right: "10%", bottom: "15%", top: "15%" },
+          legend: { 
+            data: spec.y, 
+            top: 30, 
+            textStyle: { color: colors.labelColor } 
+          },
+          grid: { 
+            left: "10%", 
+            right: "10%", 
+            bottom: "15%", 
+            top: "15%",
+            borderColor: colors.gridLineColor,
+          },
           xAxis: {
             type: "category",
             data: xData,
             name: spec.x_label || spec.x,
-            nameTextStyle: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
             axisLabel: { 
               rotate: 45, 
-              color: "#b0b0b0",
+              color: colors.labelColor,
               interval: interval,
               formatter: (value: string) => {
-                // For large datasets, truncate long labels
                 if (rowCount > 500 && value.length > 12) {
                   return value.substring(0, 12) + "...";
                 }
@@ -210,19 +285,23 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
             },
             axisTick: {
               interval: interval,
+              lineStyle: { color: colors.axisLineColor },
             },
+            splitLine: { show: true, lineStyle: { color: colors.gridLineColor } },
           },
           yAxis: {
             type: "value",
             name: spec.y_label || spec.y.join(", "),
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            axisLabel: { color: colors.labelColor },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           dataZoom: [
             { 
               type: "inside", 
               start: 0, 
-              end: rowCount > 500 ? 20 : 100, // Show only 20% initially for large datasets
+              end: rowCount > 500 ? 20 : 100,
               zoomOnMouseWheel: true,
             },
             { 
@@ -231,6 +310,8 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               end: rowCount > 500 ? 20 : 100,
               height: 30,
               bottom: 10,
+              textStyle: { color: colors.labelColor },
+              borderColor: colors.axisLineColor,
             },
           ],
           series,
@@ -244,29 +325,44 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
         ]);
 
         return {
+          color: colors.seriesColors,
+          backgroundColor: colors.chartBackground,
           title: {
             text: spec.title || "Scatter Plot",
             left: "center",
-            textStyle: { color: "#e0e0e0", fontSize: 16, fontWeight: "bold" },
+            textStyle: { color: colors.titleColor, fontSize: 16, fontWeight: "bold" },
           },
           tooltip: {
+            backgroundColor: colors.tooltipBg,
+            borderColor: colors.tooltipBorder,
+            textStyle: { color: colors.titleColor },
             formatter: (params: any) => {
               const [x, y] = params.value;
               return `${spec.x}: ${x.toFixed(2)}<br/>${spec.y[0]}: ${y.toFixed(2)}`;
             },
           },
-          grid: { left: "10%", right: "10%", bottom: "15%", top: "15%" },
+          grid: { 
+            left: "10%", 
+            right: "10%", 
+            bottom: "15%", 
+            top: "15%",
+            borderColor: colors.gridLineColor,
+          },
           xAxis: {
             type: "value",
             name: spec.x_label || spec.x,
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            axisLabel: { color: colors.labelColor },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           yAxis: {
             type: "value",
             name: spec.y_label || spec.y[0],
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            axisLabel: { color: colors.labelColor },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           series: [
             {
@@ -276,6 +372,10 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               large: rowCount > 2000,
               largeThreshold: 2000,
               progressive: 8000,
+              itemStyle: {
+                color: colors.seriesColors[0],
+                opacity: 0.7,
+              },
             },
           ],
         };
@@ -301,7 +401,6 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
             const lat = parseFloat(row[latIndex]);
             const value = parseFloat(row[valueIndex]) || 0;
             
-            // Validate coordinates
             if (lon < -180 || lon > 180 || lat < -90 || lat > 90) {
               return null;
             }
@@ -309,24 +408,31 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
             return {
               value: [lon, lat, Math.max(0, value * 0.1)],
               itemStyle: {
-                color: value > 0 ? "#ff6b6b" : "#4ecdc4",
+                color: value > 0 ? colors.seriesColors[0] : colors.seriesColors[1],
                 opacity: 0.8,
               },
             };
           })
           .filter((item: any) => item !== null);
 
-        // NASA Blue Marble Earth texture
-        const earthTextureUrl = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImciPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMyYTliZWQiLz48c3RvcCBvZmZzZXQ9IjcwJSIgc3RvcC1jb2xvcj0iIzFhN2FhZCIvPjxzdG9wIG9mZnNldD0iMTAwJSIgc3RvcC1jb2xvcj0iIzBkNGQ2ZCIvPjwvcmFkaWFsR3JhZGllbnQ+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZykiLz48L3N2Zz4=";
+        // Create earth texture that adapts to theme
+        const earthColors = theme === 'dark' 
+          ? { ocean1: '#2a9bed', ocean2: '#1a7aad', ocean3: '#0d4d6d' }
+          : { ocean1: '#4db8ff', ocean2: '#2a9bed', ocean3: '#1a7aad' };
+        
+        const earthTextureUrl = `data:image/svg+xml;base64,${btoa(`<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="g"><stop offset="0%" stop-color="${earthColors.ocean1}"/><stop offset="70%" stop-color="${earthColors.ocean2}"/><stop offset="100%" stop-color="${earthColors.ocean3}"/></radialGradient></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>`)}`;
 
         return {
-          backgroundColor: "#000000",
+          backgroundColor: colors.chartBackground,
           title: {
             text: spec.title || "3D Globe",
             left: "center",
-            textStyle: { color: "#e0e0e0", fontSize: 16, fontWeight: "bold" },
+            textStyle: { color: colors.titleColor, fontSize: 16, fontWeight: "bold" },
           },
           tooltip: {
+            backgroundColor: colors.tooltipBg,
+            borderColor: colors.tooltipBorder,
+            textStyle: { color: colors.titleColor },
             formatter: (params: any) => {
               const [lon, lat, alt] = params.value;
               return `Lon: ${lon.toFixed(2)}°<br/>Lat: ${lat.toFixed(2)}°<br/>Value: ${(alt / 0.1).toFixed(2)}`;
@@ -346,10 +452,10 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
             },
             light: {
               ambient: {
-                intensity: 0.5,
+                intensity: theme === 'dark' ? 0.5 : 0.7,
               },
               main: {
-                intensity: 1.8,
+                intensity: theme === 'dark' ? 1.8 : 2.2,
                 shadow: true,
               },
             },
@@ -368,7 +474,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               itemStyle: {
                 opacity: 0.8,
               },
-              blendMode: "lighter",
+              blendMode: theme === 'dark' ? "lighter" : "source-over",
             },
           ],
         };
@@ -387,13 +493,16 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
         ]);
 
         return {
-          backgroundColor: "#1a1a2e",
+          backgroundColor: colors.chartBackground,
           title: {
             text: spec.title || "3D Scatter Plot",
             left: "center",
-            textStyle: { color: "#e0e0e0", fontSize: 16, fontWeight: "bold" },
+            textStyle: { color: colors.titleColor, fontSize: 16, fontWeight: "bold" },
           },
           tooltip: {
+            backgroundColor: colors.tooltipBg,
+            borderColor: colors.tooltipBorder,
+            textStyle: { color: colors.titleColor },
             formatter: (params: any) => {
               const [x, y, z] = params.value;
               return `${spec.x}: ${x.toFixed(2)}<br/>${spec.y[0]}: ${y.toFixed(2)}<br/>${spec.z}: ${z.toFixed(2)}`;
@@ -411,28 +520,40 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
             boxDepth: 100,
             light: {
               main: {
-                intensity: 1.2,
+                intensity: theme === 'dark' ? 1.2 : 1.5,
                 shadow: true,
               },
               ambient: {
-                intensity: 0.4,
+                intensity: theme === 'dark' ? 0.4 : 0.6,
               },
+            },
+            axisLine: {
+              lineStyle: { color: colors.axisLineColor },
+            },
+            splitLine: {
+              lineStyle: { color: colors.gridLineColor },
             },
           },
           xAxis3D: {
             name: spec.x_label || spec.x,
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLabel: { color: colors.labelColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           yAxis3D: {
             name: spec.y_label || spec.y[0],
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLabel: { color: colors.labelColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           zAxis3D: {
             name: spec.z_label || spec.z,
-            nameTextStyle: { color: "#b0b0b0" },
-            axisLabel: { color: "#b0b0b0" },
+            nameTextStyle: { color: colors.axisColor },
+            axisLabel: { color: colors.labelColor },
+            axisLine: { lineStyle: { color: colors.axisLineColor } },
+            splitLine: { lineStyle: { color: colors.gridLineColor } },
           },
           series: [
             {
@@ -440,7 +561,8 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
               data: scatter3DData,
               symbolSize: 6,
               itemStyle: {
-                color: "rgba(100, 180, 255, 0.8)",
+                color: colors.seriesColors[0],
+                opacity: 0.8,
               },
             },
           ],
@@ -451,14 +573,14 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
         setError(`Unsupported plot type: ${spec.plot_type}`);
         return {};
     }
-  }, [data, spec]);
+  }, [data, spec, theme]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-[400px] bg-gray-900/50 rounded-lg">
+      <div className="flex items-center justify-center h-[400px] bg-muted/30 rounded-lg border border-border">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
-          <p className="text-gray-400">Loading visualization...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading visualization...</p>
         </div>
       </div>
     );
@@ -466,10 +588,10 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
 
   if (error) {
     return (
-      <div className="p-4 bg-red-900/20 border border-red-500/50 rounded-lg">
+      <div className="p-4 bg-destructive/10 border border-destructive/30 rounded-lg">
         <div className="flex items-start gap-3">
           <svg
-            className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0"
+            className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -480,8 +602,8 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
             />
           </svg>
           <div>
-            <h4 className="text-red-400 font-semibold">Visualization Error</h4>
-            <p className="text-red-300 text-sm mt-1">{error}</p>
+            <h4 className="text-destructive font-semibold">Visualization Error</h4>
+            <p className="text-destructive/90 text-sm mt-1">{error}</p>
           </div>
         </div>
       </div>
@@ -490,8 +612,8 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
 
   if (!data || data.data.length === 0) {
     return (
-      <div className="p-4 bg-yellow-900/20 border border-yellow-500/50 rounded-lg">
-        <p className="text-yellow-400">No data available for visualization</p>
+      <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+        <p className="text-yellow-700 dark:text-yellow-400">No data available for visualization</p>
       </div>
     );
   }
@@ -500,7 +622,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({ spec, projectPath }) => {
   const height = is3D ? 600 : 400;
 
   return (
-    <div className="w-full rounded-lg overflow-hidden border border-gray-700 bg-gray-900/30">
+    <div className="w-full rounded-lg overflow-hidden border border-border bg-card shadow-sm">
       <ReactECharts
         option={chartOption}
         style={{ height: `${height}px`, width: "100%" }}
