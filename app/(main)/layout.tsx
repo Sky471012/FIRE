@@ -63,8 +63,42 @@ function MainLayoutContent({
 		lastNonZeroRightSize,
 	} = useSidebar();
 
+	// State for modal overlay
+	const [showModalOverlay, setShowModalOverlay] = useState(false);
+
 	// Initialize window state management for main window
 	useWindowState("main");
+
+	// Listen for modal overlay events from Tauri
+	useEffect(() => {
+		if (!isTauri) return;
+
+		const setupListeners = async () => {
+			const { listen } = await import("@tauri-apps/api/event");
+
+			const showUnlisten = await listen("show-modal-overlay", () => {
+				setShowModalOverlay(true);
+			});
+
+			const hideUnlisten = await listen("hide-modal-overlay", () => {
+				setShowModalOverlay(false);
+			});
+
+			return () => {
+				showUnlisten();
+				hideUnlisten();
+			};
+		};
+
+		let cleanup: (() => void) | undefined;
+		setupListeners().then((fn) => {
+			cleanup = fn;
+		});
+
+		return () => {
+			cleanup?.();
+		};
+	}, [isTauri]);
 
 	const leftRef = useRef<
 		ImperativePanelHandle & { resize?: (size: number) => void }
@@ -109,7 +143,14 @@ function MainLayoutContent({
 			<ThemeSyncProvider>
 				<ChatProvider>
 					<TooltipProvider>
-						<div className="h-screen flex flex-col bg-background">
+						<div className="h-screen flex flex-col bg-background relative">
+							{/* Modal overlay - prevents interaction when child window is open */}
+							{showModalOverlay && (
+								<div
+									className="absolute inset-0 z-[9999] bg-black/20 backdrop-blur-[1px]"
+									style={{ pointerEvents: "all" }}
+								/>
+							)}
 							{isTauri && <TitleBar />}
 							<div className="flex flex-1 overflow-hidden">
 								<ActivityBar />

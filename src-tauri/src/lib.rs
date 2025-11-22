@@ -254,6 +254,8 @@ pub fn run() {
             auth::confirm_sign_up,
             auth::sign_in,
             auth::sign_out,
+            auth::forgot_password,
+            auth::confirm_forgot_password,
             auth::get_current_user,
             auth::send_file_to_user,
             auth::check_incoming_transfers,

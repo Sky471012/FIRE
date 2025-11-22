@@ -22,6 +22,7 @@ export function useTransfers() {
 
 			if (!user) {
 				setTransfers([]);
+				setError(null); // Clear any previous errors
 				return;
 			}
 
@@ -30,8 +31,31 @@ export function useTransfers() {
 			setTransfers(result);
 			setError(null);
 		} catch (err) {
-			setError(err as string);
-			console.error("Failed to check transfers:", err);
+			const errorMessage = err as string;
+			
+			// Silently handle expected errors in development
+			const isExpectedError = 
+				errorMessage.includes("Not logged in") || 
+				errorMessage.includes("service error") ||
+				errorMessage.includes("Failed to query transfers");
+			
+			if (isExpectedError) {
+				// Clear error state for expected errors (like not being logged in)
+				if (errorMessage.includes("Not logged in")) {
+					setError(null);
+					setTransfers([]);
+				} else {
+					// For service errors, only set error if not in development
+					if (process.env.NODE_ENV !== "development") {
+						setError(errorMessage);
+						console.error("Failed to check transfers:", err);
+					}
+				}
+			} else {
+				// Unexpected errors should always be logged
+				setError(errorMessage);
+				console.error("Failed to check transfers:", err);
+			}
 		} finally {
 			setIsLoading(false);
 		}

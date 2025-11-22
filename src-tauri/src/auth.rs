@@ -259,6 +259,48 @@ pub async fn sign_in(username: String, password: String) -> Result<String, Strin
     Ok(format!("Signed in successfully as {}", username))
 }
 
+/// Initiate forgot password flow - sends reset code to user's email
+#[tauri::command]
+pub async fn forgot_password(username: String) -> Result<String, String> {
+    let config = get_cognito_config().await;
+    let client = CognitoClient::new(&config);
+
+    client
+        .forgot_password()
+        .client_id(CLIENT_ID)
+        .username(&username)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to initiate password reset: {}", e))?;
+
+    logger::internal_log_info(&format!("Password reset initiated for user: {}", username));
+    Ok(format!("Password reset code sent to your email. Please check your inbox."))
+}
+
+/// Confirm forgot password with code and new password
+#[tauri::command]
+pub async fn confirm_forgot_password(
+    username: String,
+    code: String,
+    new_password: String,
+) -> Result<String, String> {
+    let config = get_cognito_config().await;
+    let client = CognitoClient::new(&config);
+
+    client
+        .confirm_forgot_password()
+        .client_id(CLIENT_ID)
+        .username(&username)
+        .confirmation_code(&code)
+        .password(&new_password)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to reset password: {}", e))?;
+
+    logger::internal_log_info(&format!("Password reset successfully for user: {}", username));
+    Ok(format!("Password reset successfully! You can now sign in with your new password."))
+}
+
 /// Sign out user by removing stored credentials
 #[tauri::command]
 pub async fn sign_out() -> Result<String, String> {

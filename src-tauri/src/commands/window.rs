@@ -71,11 +71,10 @@ pub async fn create_child_window(
         .build()
         .map_err(|e| e.to_string())?;
 
-    // Set always on top to keep child above parent
-    child_window
-        .set_always_on_top(true)
-        .map_err(|e| e.to_string())?;
-
+    // Don't set always on top - let the OS handle window stacking naturally
+    // This prevents the window from appearing on top during alt-tabbing
+    // The parent relationship already ensures proper stacking behavior
+    
     // Show child window
     child_window.show().map_err(|e| e.to_string())?;
 
