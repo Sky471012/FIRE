@@ -8,9 +8,9 @@ import { PrimarySideBar } from "@/components/layout/PrimarySideBar";
 import { SecondarySideBar } from "@/components/layout/SecondarySideBar";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { TitleBar } from "@/components/layout/TitleBar";
+import { ChatProvider } from "@/components/providers/ChatProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ThemeSyncProvider } from "@/components/providers/ThemeSyncProvider";
-import { ChatProvider } from "@/components/providers/ChatProvider";
 import {
 	ResizableHandle,
 	ResizablePanel,
@@ -109,67 +109,67 @@ function MainLayoutContent({
 			<ThemeSyncProvider>
 				<ChatProvider>
 					<TooltipProvider>
-					<div className="h-screen flex flex-col bg-background">
-						{isTauri && <TitleBar />}
-						<div className="flex flex-1 overflow-hidden">
-							<ActivityBar />
-						<ResizablePanelGroup direction="horizontal" className="flex-1">
-							{/* Left Sidebar Panel (always mounted) */}
-							<ResizablePanel
-								ref={leftRef}
-								id="primary-sidebar"
-								defaultSize={leftSize}
-								minSize={10}
-								maxSize={40}
-								collapsible
-								collapsedSize={0}
-								onResize={(size) => {
-									setLeftSize(size);
-									// close/open based on whether we've resized to 0
-									setLeftOpen(size > 0);
-								}}
-								className={`${isLeftSidebarOpen ? "visible" : "hidden"}`}
-							>
-								<PrimarySideBar />
-							</ResizablePanel>
+						<div className="h-screen flex flex-col bg-background">
+							{isTauri && <TitleBar />}
+							<div className="flex flex-1 overflow-hidden">
+								<ActivityBar />
+								<ResizablePanelGroup direction="horizontal" className="flex-1">
+									{/* Left Sidebar Panel (always mounted) */}
+									<ResizablePanel
+										ref={leftRef}
+										id="primary-sidebar"
+										defaultSize={leftSize}
+										minSize={10}
+										maxSize={40}
+										collapsible
+										collapsedSize={0}
+										onResize={(size) => {
+											setLeftSize(size);
+											// close/open based on whether we've resized to 0
+											setLeftOpen(size > 0);
+										}}
+										className={`${isLeftSidebarOpen ? "visible" : "hidden"}`}
+									>
+										<PrimarySideBar />
+									</ResizablePanel>
 
-							{isLeftSidebarOpen && <ResizableHandle withHandle />}
+									{isLeftSidebarOpen && <ResizableHandle withHandle />}
 
-							{/* Main Content Panel */}
-							<ResizablePanel
-								id="content"
-								defaultSize={100 - leftSize - rightSize}
-								minSize={30}
-							>
-								<main className="h-full overflow-hidden">{children}</main>
-							</ResizablePanel>
+									{/* Main Content Panel */}
+									<ResizablePanel
+										id="content"
+										defaultSize={100 - leftSize - rightSize}
+										minSize={30}
+									>
+										<main className="h-full overflow-hidden">{children}</main>
+									</ResizablePanel>
 
-							{isRightSidebarOpen && <ResizableHandle withHandle />}
+									{isRightSidebarOpen && <ResizableHandle withHandle />}
 
-							{/* Right Sidebar Panel (always mounted) */}
-							<ResizablePanel
-								ref={rightRef}
-								id="secondary-sidebar"
-								defaultSize={rightSize}
-								minSize={10}
-								maxSize={40}
-								collapsible
-								collapsedSize={0}
-								onResize={(size) => {
-									setRightSize(size);
-									setRightOpen(size > 0);
-								}}
-								className={`${isRightSidebarOpen ? "visible" : "hidden"}`}
-							>
-								<SecondarySideBar />
-							</ResizablePanel>
-						</ResizablePanelGroup>
-					</div>
-					<StatusBar />
-				</div>
-				<Toaster />
-			</TooltipProvider>
-			</ChatProvider>
+									{/* Right Sidebar Panel (always mounted) */}
+									<ResizablePanel
+										ref={rightRef}
+										id="secondary-sidebar"
+										defaultSize={rightSize}
+										minSize={10}
+										maxSize={40}
+										collapsible
+										collapsedSize={0}
+										onResize={(size) => {
+											setRightSize(size);
+											setRightOpen(size > 0);
+										}}
+										className={`${isRightSidebarOpen ? "visible" : "hidden"}`}
+									>
+										<SecondarySideBar />
+									</ResizablePanel>
+								</ResizablePanelGroup>
+							</div>
+							<StatusBar />
+						</div>
+						<Toaster />
+					</TooltipProvider>
+				</ChatProvider>
 			</ThemeSyncProvider>
 		</ThemeProvider>
 	);

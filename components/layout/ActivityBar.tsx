@@ -4,9 +4,9 @@ import {
 	Database,
 	FolderTree,
 	MessageSquare,
+	Play,
 	Search,
 	Settings,
-	Play,
 	Square,
 } from "lucide-react";
 import {
@@ -84,7 +84,9 @@ export function ActivityBar() {
 							isRunning ? "text-red-500" : "text-green-500",
 							isLoading && "opacity-50 cursor-wait",
 						)}
-						aria-label={isRunning ? "Stop Python Server" : "Start Python Server"}
+						aria-label={
+							isRunning ? "Stop Python Server" : "Start Python Server"
+						}
 					>
 						{isRunning ? (
 							<Square className="h-5 w-5 fill-current" />

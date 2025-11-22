@@ -4,8 +4,8 @@ import "@/styles/globals.css";
 import type * as React from "react";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { ThemeSyncProvider } from "@/components/providers/ThemeSyncProvider";
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useWindowState } from "@/hooks/use-window-state";
 
 function SettingsContent({ children }: { children: React.ReactNode }) {

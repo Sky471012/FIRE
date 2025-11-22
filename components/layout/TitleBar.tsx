@@ -58,7 +58,6 @@ export function TitleBar() {
 				</button>
 			</div>
 
-
 			{/* Sidebar Toggle Buttons */}
 			<div className="flex items-center flex-shrink-0 border-l border-border/50">
 				<button

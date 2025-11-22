@@ -1,8 +1,8 @@
 "use client";
 
-import { useTabs } from "@/hooks/use-tabs";
 import { FileTabContent } from "@/components/features/editor";
 import { WelcomePage } from "@/components/pages/WelcomePage";
+import { useTabs } from "@/hooks/use-tabs";
 
 export function TabContent() {
 	const { tabs, activeTabId } = useTabs();
@@ -24,7 +24,9 @@ export function TabContent() {
 
 	// Handle file tabs
 	if (activeTab.filePath) {
-		return <FileTabContent filePath={activeTab.filePath} tabId={activeTab.id} />;
+		return (
+			<FileTabContent filePath={activeTab.filePath} tabId={activeTab.id} />
+		);
 	}
 
 	// Handle custom content tabs (for chat, custom pages, etc.)
@@ -41,4 +43,3 @@ export function TabContent() {
 		</div>
 	);
 }
-

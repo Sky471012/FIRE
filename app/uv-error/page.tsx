@@ -1,9 +1,9 @@
 "use client";
 
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
+import { AlertCircle, ExternalLink } from "lucide-react";
 import { ChildWindowControls } from "@/components/features/window/ChildWindowControls";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, AlertCircle } from "lucide-react";
-import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 export default function UvErrorPage() {
 	const handleClose = () => {
@@ -95,4 +95,3 @@ export default function UvErrorPage() {
 		</div>
 	);
 }
-

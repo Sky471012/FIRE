@@ -46,4 +46,3 @@ export function FileTabContent({ filePath, tabId }: FileTabContentProps) {
 
 	return <MonacoEditor filePath={filePath} tabId={tabId} />;
 }
-

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 export interface TableInfo {
@@ -37,109 +37,112 @@ export function useDatasets() {
 		}
 	}, []);
 
-	const importDataset = useCallback(async (projectPath: string) => {
-		setIsImporting(true);
-		let toastId: string | number | undefined;
-		try {
-			// Open file dialog with filters for supported file types
-			const selectedFile = await open({
-				title: "Select Dataset to Import",
-				multiple: false,
-				filters: [
-					{
-						name: "Supported Formats",
-						extensions: ["csv", "xlsx", "xls", "nc", "parquet"],
-					},
-					{
-						name: "CSV Files",
-						extensions: ["csv"],
-					},
-					{
-						name: "Excel Files",
-						extensions: ["xlsx", "xls"],
-					},
-					{
-						name: "NetCDF Files",
-						extensions: ["nc"],
-					},
-					{
-						name: "Parquet Files",
-						extensions: ["parquet"],
-					},
-				],
-			});
+	const importDataset = useCallback(
+		async (projectPath: string) => {
+			setIsImporting(true);
+			let toastId: string | number | undefined;
+			try {
+				// Open file dialog with filters for supported file types
+				const selectedFile = await open({
+					title: "Select Dataset to Import",
+					multiple: false,
+					filters: [
+						{
+							name: "Supported Formats",
+							extensions: ["csv", "xlsx", "xls", "nc", "parquet"],
+						},
+						{
+							name: "CSV Files",
+							extensions: ["csv"],
+						},
+						{
+							name: "Excel Files",
+							extensions: ["xlsx", "xls"],
+						},
+						{
+							name: "NetCDF Files",
+							extensions: ["nc"],
+						},
+						{
+							name: "Parquet Files",
+							extensions: ["parquet"],
+						},
+					],
+				});
 
-			if (!selectedFile) {
-				// User cancelled
-				return;
+				if (!selectedFile) {
+					// User cancelled
+					return;
+				}
+
+				// Determine file type and call appropriate import function
+				const filePath = selectedFile as string;
+				const extension = filePath.split(".").pop()?.toLowerCase();
+				const fileName = filePath.split(/[\\/]/).pop() || "file";
+
+				console.log("Importing file:", filePath, "with extension:", extension);
+
+				// Show loading toast
+				toastId = toast.loading(`Importing ${fileName}...`, {
+					description: "Please wait while the dataset is being loaded",
+				});
+
+				switch (extension) {
+					case "csv":
+						await invoke("from_csv", {
+							filePath,
+							projectPath,
+						});
+						break;
+					case "xlsx":
+					case "xls":
+						await invoke("from_excel", {
+							filePath,
+							projectPath,
+						});
+						break;
+					case "nc":
+						await invoke("from_netcdf", {
+							filePath,
+							projectPath,
+						});
+						break;
+					case "parquet":
+						await invoke("from_parquet", {
+							filePath,
+							projectPath,
+						});
+						break;
+					default:
+						throw new Error(`Unsupported file format: ${extension}`);
+				}
+
+				// Reload tables after successful import
+				await loadTables(projectPath);
+
+				console.log("Dataset imported successfully");
+
+				// Show success toast
+				toast.success("Dataset imported successfully", {
+					id: toastId,
+					description: `${fileName} has been added to your project`,
+				});
+			} catch (err) {
+				console.error("Failed to import dataset:", err);
+				const errorMessage = err instanceof Error ? err.message : String(err);
+				setError(errorMessage);
+
+				// Show error toast
+				toast.error("Failed to import dataset", {
+					id: toastId,
+					description: errorMessage,
+				});
+			} finally {
+				setIsImporting(false);
 			}
-
-			// Determine file type and call appropriate import function
-			const filePath = selectedFile as string;
-			const extension = filePath.split(".").pop()?.toLowerCase();
-			const fileName = filePath.split(/[\\/]/).pop() || "file";
-
-			console.log("Importing file:", filePath, "with extension:", extension);
-
-			// Show loading toast
-			toastId = toast.loading(`Importing ${fileName}...`, {
-				description: "Please wait while the dataset is being loaded",
-			});
-
-			switch (extension) {
-				case "csv":
-					await invoke("from_csv", {
-						filePath,
-						projectPath,
-					});
-					break;
-				case "xlsx":
-				case "xls":
-					await invoke("from_excel", {
-						filePath,
-						projectPath,
-					});
-					break;
-				case "nc":
-					await invoke("from_netcdf", {
-						filePath,
-						projectPath,
-					});
-					break;
-				case "parquet":
-					await invoke("from_parquet", {
-						filePath,
-						projectPath,
-					});
-					break;
-				default:
-					throw new Error(`Unsupported file format: ${extension}`);
-			}
-
-			// Reload tables after successful import
-			await loadTables(projectPath);
-
-			console.log("Dataset imported successfully");
-
-			// Show success toast
-			toast.success("Dataset imported successfully", {
-				id: toastId,
-				description: `${fileName} has been added to your project`,
-			});
-		} catch (err) {
-			console.error("Failed to import dataset:", err);
-			const errorMessage = err instanceof Error ? err.message : String(err);
-			setError(errorMessage);
-
-			// Show error toast
-			toast.error("Failed to import dataset", {
-				id: toastId,
-				description: errorMessage,
-			});
-		} finally {
-			setIsImporting(false);
-		}
-	}, [loadTables]);
+		},
+		[loadTables],
+	);
 
 	const ingestFromUrl = useCallback(
 		async (
@@ -199,8 +202,7 @@ export function useDatasets() {
 				return result;
 			} catch (err) {
 				console.error("Failed to ingest from URL:", err);
-				const errorMessage =
-					err instanceof Error ? err.message : String(err);
+				const errorMessage = err instanceof Error ? err.message : String(err);
 				setError(errorMessage);
 
 				// Show error toast

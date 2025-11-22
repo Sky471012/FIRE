@@ -19,4 +19,3 @@ export function DynamicIcon({ name, className, size }: DynamicIconProps) {
 
 	return <IconComponent className={className} size={size} />;
 }
-

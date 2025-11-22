@@ -2,8 +2,8 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { useFileSystem } from "@/hooks/use-filesystem";
 import { useTabs } from "@/hooks/use-tabs";
-import { fileSystemApi } from "@/lib/filesystem-api";
 import { getFileIcon } from "@/lib/file-icons";
+import { fileSystemApi } from "@/lib/filesystem-api";
 import type { FileSystemEntry } from "@/types/filesystem";
 
 export function useFileExplorerHandlers(

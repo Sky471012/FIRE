@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from "react";
-import { safeInvoke } from "@/lib/tauri";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { safeInvoke } from "@/lib/tauri";
 
 const SERVER_URL = "http://localhost:8001";
 const HEALTH_CHECK_INTERVAL = 500; // Check every 500ms
 const MAX_HEALTH_CHECK_ATTEMPTS = 60; // 30 seconds total (60 * 500ms)
+
+// Global ref to track if server is processing a request
+// This prevents false negatives during active AI requests
+export const serverProcessingState = { isProcessing: false };
 
 export function usePythonServer() {
 	const [isRunning, setIsRunning] = useState(false);
@@ -17,7 +21,7 @@ export function usePythonServer() {
 		try {
 			const response = await fetch(`${SERVER_URL}/health`, {
 				method: "GET",
-				signal: AbortSignal.timeout(2000), // 2 second timeout
+				signal: AbortSignal.timeout(5000), // 5 second timeout (increased for busy server)
 			});
 			return response.ok;
 		} catch (error) {
@@ -27,6 +31,11 @@ export function usePythonServer() {
 
 	// Check server status on mount and periodically
 	const checkServerStatus = useCallback(async () => {
+		// Don't update server status if currently processing a request
+		if (serverProcessingState.isProcessing) {
+			return;
+		}
+
 		try {
 			const running = await safeInvoke<boolean>("is_server_running");
 			const healthy = running ? await checkServerHealth() : false;
@@ -73,7 +82,7 @@ export function usePythonServer() {
 
 	const startServer = useCallback(async () => {
 		if (isLoading) return;
-		
+
 		setIsLoading(true);
 
 		// Show loading toast
@@ -107,7 +116,8 @@ export function usePythonServer() {
 				throw new Error("Server started but failed health check");
 			}
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
 			toast.error("Failed to start server", {
 				id: toastIdRef.current,
 				description: errorMessage,
@@ -124,7 +134,7 @@ export function usePythonServer() {
 
 	const stopServer = useCallback(async () => {
 		if (isLoading) return;
-		
+
 		// Clear any pending health checks
 		if (healthCheckIntervalRef.current) {
 			clearInterval(healthCheckIntervalRef.current);
@@ -145,7 +155,8 @@ export function usePythonServer() {
 				});
 			}
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
 			toast.error("Failed to stop server", {
 				id: loadingToastId,
 				description: errorMessage,
@@ -166,6 +177,17 @@ export function usePythonServer() {
 		}
 	}, [isRunning, startServer, stopServer]);
 
+	// Mark server as processing request (prevents status checks during active requests)
+	const markProcessingStart = useCallback(() => {
+		serverProcessingState.isProcessing = true;
+	}, []);
+
+	const markProcessingEnd = useCallback(() => {
+		serverProcessingState.isProcessing = false;
+		// Recheck server status after request completes
+		setTimeout(checkServerStatus, 500);
+	}, [checkServerStatus]);
+
 	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
@@ -181,6 +203,7 @@ export function usePythonServer() {
 		startServer,
 		stopServer,
 		toggleServer,
+		markProcessingStart,
+		markProcessingEnd,
 	};
 }
-

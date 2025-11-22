@@ -79,4 +79,3 @@ export function getFileIcon(fileName: string): string | undefined {
 
 	return iconMap[ext || ""] || "File";
 }
-

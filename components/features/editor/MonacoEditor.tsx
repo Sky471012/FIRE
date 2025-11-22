@@ -5,8 +5,8 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
-import { fileSystemApi } from "@/lib/filesystem-api";
 import { useTabs } from "@/hooks/use-tabs";
+import { fileSystemApi } from "@/lib/filesystem-api";
 
 interface MonacoEditorProps {
 	filePath: string;
@@ -200,4 +200,3 @@ export function MonacoEditor({ filePath, tabId }: MonacoEditorProps) {
 		</div>
 	);
 }
-

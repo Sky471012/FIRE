@@ -1,6 +1,8 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
@@ -9,7 +11,6 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -19,12 +20,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
 
 interface UrlIngestDialogProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onSubmit: (url: string, mode: "static" | "dynamic", maxDepth: number) => Promise<void>;
+	onSubmit: (
+		url: string,
+		mode: "static" | "dynamic",
+		maxDepth: number,
+	) => Promise<void>;
 }
 
 export function UrlIngestDialog({
@@ -99,7 +103,9 @@ export function UrlIngestDialog({
 								type="url"
 								placeholder="https://docs.example.com"
 								value={url}
-								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUrl(e.target.value)}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+									setUrl(e.target.value)
+								}
 								disabled={isLoading}
 								className="w-full"
 							/>
@@ -113,7 +119,9 @@ export function UrlIngestDialog({
 							<Label htmlFor="mode">Crawl Mode</Label>
 							<Select
 								value={mode}
-								onValueChange={(value: string) => setMode(value as "static" | "dynamic")}
+								onValueChange={(value: string) =>
+									setMode(value as "static" | "dynamic")
+								}
 								disabled={isLoading}
 							>
 								<SelectTrigger id="mode">
@@ -127,7 +135,8 @@ export function UrlIngestDialog({
 								</SelectContent>
 							</Select>
 							<p className="text-xs text-muted-foreground">
-								Static for regular HTML sites, Dynamic for JavaScript-heavy sites
+								Static for regular HTML sites, Dynamic for JavaScript-heavy
+								sites
 							</p>
 						</div>
 
@@ -140,7 +149,9 @@ export function UrlIngestDialog({
 								min="1"
 								max="10"
 								value={maxDepth}
-								onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMaxDepth(e.target.value)}
+								onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+									setMaxDepth(e.target.value)
+								}
 								disabled={isLoading}
 								className="w-full"
 							/>

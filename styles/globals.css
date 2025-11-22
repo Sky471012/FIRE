@@ -3,6 +3,31 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Chat Message Animations */
+@keyframes slideInFromBottom {
+	from {
+		opacity: 0;
+		transform: translateY(1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.markdown-content {
+	animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
 :root {
 	--background: oklch(0.99 0 0);
 	--foreground: oklch(0.25 0 0);
@@ -278,7 +303,8 @@
 	font-style: italic;
 }
 
-.prose ul, .prose ol {
+.prose ul,
+.prose ol {
 	margin-top: 0.5em;
 	margin-bottom: 0.5em;
 	padding-left: 1.5em;
@@ -309,13 +335,20 @@
 	border-radius: 0;
 }
 
-.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
 	margin-top: 1em;
 	margin-bottom: 0.5em;
 	font-weight: 600;
 }
 
-.prose h1:first-child, .prose h2:first-child, .prose h3:first-child {
+.prose h1:first-child,
+.prose h2:first-child,
+.prose h3:first-child {
 	margin-top: 0;
 }
 
@@ -335,7 +368,8 @@
 	width: 100%;
 }
 
-.prose th, .prose td {
+.prose th,
+.prose td {
 	padding: 0.5em;
 	border: 1px solid hsl(var(--border));
 }

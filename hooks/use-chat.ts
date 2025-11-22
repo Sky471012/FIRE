@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { safeInvoke } from "@/lib/tauri";
+import { serverProcessingState } from "./use-python-server";
 
 const API_BASE_URL = "http://localhost:8001";
 
@@ -136,7 +137,7 @@ export const useChat = create<ChatState>((set, get) => ({
 			set({
 				messages: messages || [],
 				currentSessionId: sessionId,
-				serverRequired: true // Mark that server is required for sending new messages
+				serverRequired: true, // Mark that server is required for sending new messages
 			});
 			console.log("[useChat] Set current session to:", sessionId);
 		} catch (err) {
@@ -169,11 +170,11 @@ export const useChat = create<ChatState>((set, get) => ({
 			}
 
 			await get().loadSessions();
-			set({ 
+			set({
 				currentSessionId: sessionId,
 				messages: [],
 				visualizationSpec: null,
-				serverRequired: true // Mark that server is required for sending messages
+				serverRequired: true, // Mark that server is required for sending messages
 			});
 			return sessionId;
 		} catch (err) {
@@ -204,11 +205,11 @@ export const useChat = create<ChatState>((set, get) => ({
 
 			// Clear current session if it was deleted
 			if (get().currentSessionId === sessionId) {
-				set({ 
+				set({
 					currentSessionId: null,
 					messages: [],
 					visualizationSpec: null,
-					serverRequired: false
+					serverRequired: false,
 				});
 			}
 		} catch (err) {
@@ -225,7 +226,7 @@ export const useChat = create<ChatState>((set, get) => ({
 	sendMessage: async (message: string) => {
 		const dataPath = getDataPath(get().currentProjectPath);
 		const currentSessionId = get().currentSessionId;
-		
+
 		if (!dataPath || !currentSessionId) {
 			set({ error: "No session selected" });
 			return;
@@ -238,7 +239,14 @@ export const useChat = create<ChatState>((set, get) => ({
 			created_at: new Date().toISOString(),
 		};
 		const currentMessages = get().messages;
-		set({ messages: [...currentMessages, userMessage], isSending: true, error: null });
+		set({
+			messages: [...currentMessages, userMessage],
+			isSending: true,
+			error: null,
+		});
+
+		// Mark server as processing to prevent false negative status checks
+		serverProcessingState.isProcessing = true;
 
 		try {
 			const response = await fetch(`${API_BASE_URL}/chat`, {
@@ -273,6 +281,8 @@ export const useChat = create<ChatState>((set, get) => ({
 			// On error, remove the optimistically added user message
 			set({ messages: currentMessages });
 		} finally {
+			// Mark processing as complete
+			serverProcessingState.isProcessing = false;
 			set({ isSending: false });
 		}
 	},

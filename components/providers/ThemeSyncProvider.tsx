@@ -22,4 +22,3 @@ export function ThemeSyncProvider({ children }: { children: React.ReactNode }) {
 
 	return <>{children}</>;
 }
-

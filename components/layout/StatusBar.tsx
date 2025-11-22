@@ -1,9 +1,9 @@
 "use client";
 
+import { invoke } from "@tauri-apps/api/core";
 import { Clock, Cpu, HardDrive, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import { useSettings } from "@/hooks/use-settings";
 
 interface SystemStats {
@@ -65,7 +65,10 @@ export function StatusBar() {
 		const interval = setInterval(fetchSystemStats, refreshInterval);
 
 		return () => clearInterval(interval);
-	}, [settings?.appearance.status_bar_refresh_ms, settings?.appearance.show_status_bar]);
+	}, [
+		settings?.appearance.status_bar_refresh_ms,
+		settings?.appearance.show_status_bar,
+	]);
 
 	// Don't render anything until mounted and settings are loaded
 	if (!mounted || loading) {

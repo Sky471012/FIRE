@@ -1,5 +1,9 @@
 "use client";
 
+import { Palette, User } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { ChildWindowControls } from "@/components/features/window/ChildWindowControls";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,10 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
-import { Palette, User } from "lucide-react";
-import { useEffect, useState, useRef, useCallback } from "react";
-import { toast } from "sonner";
-import { useTheme } from "next-themes";
 
 type Category = "general" | "appearance";
 
@@ -38,29 +38,34 @@ export default function SettingsPage() {
 		if (settings) {
 			setUserName(settings.general.user_name);
 			setShowStatusBar(settings.appearance.show_status_bar);
-			setStatusBarRefreshMs(settings.appearance.status_bar_refresh_ms.toString());
+			setStatusBarRefreshMs(
+				settings.appearance.status_bar_refresh_ms.toString(),
+			);
 		}
 	}, [settings]);
 
-	const handleUserNameChange = useCallback((value: string) => {
-		setUserName(value);
+	const handleUserNameChange = useCallback(
+		(value: string) => {
+			setUserName(value);
 
-		// Clear existing timer
-		if (debounceTimerRef.current) {
-			clearTimeout(debounceTimerRef.current);
-		}
-
-		// Set new timer to save after 500ms of no typing
-		debounceTimerRef.current = setTimeout(async () => {
-			try {
-				await updateGeneralSettings(value);
-				toast.success("Name updated successfully");
-			} catch (error) {
-				toast.error("Failed to update name");
-				console.error(error);
+			// Clear existing timer
+			if (debounceTimerRef.current) {
+				clearTimeout(debounceTimerRef.current);
 			}
-		}, 500);
-	}, [updateGeneralSettings]);
+
+			// Set new timer to save after 500ms of no typing
+			debounceTimerRef.current = setTimeout(async () => {
+				try {
+					await updateGeneralSettings(value);
+					toast.success("Name updated successfully");
+				} catch (error) {
+					toast.error("Failed to update name");
+					console.error(error);
+				}
+			}, 500);
+		},
+		[updateGeneralSettings],
+	);
 
 	// Cleanup timers on unmount
 	useEffect(() => {
@@ -84,7 +89,7 @@ export default function SettingsPage() {
 				value,
 				settings?.appearance.font_size || 14,
 				settings?.appearance.show_status_bar ?? true,
-				settings?.appearance.status_bar_refresh_ms || 2000
+				settings?.appearance.status_bar_refresh_ms || 2000,
 			);
 			toast.success("Theme updated successfully");
 		} catch (error) {
@@ -101,7 +106,7 @@ export default function SettingsPage() {
 				settings?.appearance.theme || "system",
 				settings?.appearance.font_size || 14,
 				value,
-				settings?.appearance.status_bar_refresh_ms || 2000
+				settings?.appearance.status_bar_refresh_ms || 2000,
 			);
 			toast.success("Status bar setting updated");
 		} catch (error) {
@@ -131,7 +136,7 @@ export default function SettingsPage() {
 					settings?.appearance.theme || "system",
 					settings?.appearance.font_size || 14,
 					settings?.appearance.show_status_bar ?? true,
-					numValue
+					numValue,
 				);
 				toast.success("Status bar refresh interval updated");
 			} catch (error) {
@@ -249,7 +254,10 @@ export default function SettingsPage() {
 										<div className="space-y-6">
 											<div className="space-y-2">
 												<Label htmlFor="theme">Theme</Label>
-												<Select value={currentTheme} onValueChange={handleThemeChange}>
+												<Select
+													value={currentTheme}
+													onValueChange={handleThemeChange}
+												>
 													<SelectTrigger id="theme" className="max-w-md">
 														<SelectValue placeholder="Select theme" />
 													</SelectTrigger>
@@ -268,7 +276,9 @@ export default function SettingsPage() {
 
 											<div className="space-y-4">
 												<div>
-													<h3 className="text-lg font-semibold mb-1">Status Bar</h3>
+													<h3 className="text-lg font-semibold mb-1">
+														Status Bar
+													</h3>
 													<p className="text-sm text-muted-foreground">
 														Configure the status bar display and refresh rate
 													</p>
@@ -276,7 +286,9 @@ export default function SettingsPage() {
 
 												<div className="flex items-center justify-between max-w-md">
 													<div className="space-y-0.5">
-														<Label htmlFor="show-status-bar">Show Status Bar</Label>
+														<Label htmlFor="show-status-bar">
+															Show Status Bar
+														</Label>
 														<p className="text-xs text-muted-foreground">
 															Display the status bar at the bottom of the window
 														</p>
@@ -300,11 +312,14 @@ export default function SettingsPage() {
 															step="100"
 															placeholder="2000"
 															value={statusBarRefreshMs}
-															onChange={(e) => handleStatusBarRefreshChange(e.target.value)}
+															onChange={(e) =>
+																handleStatusBarRefreshChange(e.target.value)
+															}
 															className="max-w-md"
 														/>
 														<p className="text-xs text-muted-foreground">
-															How often to update CPU and RAM usage (minimum 100ms).
+															How often to update CPU and RAM usage (minimum
+															100ms).
 														</p>
 													</div>
 												)}
@@ -320,4 +335,3 @@ export default function SettingsPage() {
 		</div>
 	);
 }
-

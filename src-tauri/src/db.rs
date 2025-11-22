@@ -567,3 +567,126 @@ pub fn bulk_insert_with_appender(
 
     Ok(())
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct QueryResult {
+    pub columns: Vec<String>,
+    pub data: Vec<Vec<String>>,
+}
+
+// Helper function to extract column names from SQL SELECT clause
+// Handles basic cases like "SELECT col1, col2 AS alias, func(col3) AS name"
+fn extract_column_names_from_sql(query: &str) -> Vec<String> {
+    let query_upper = query.to_uppercase();
+    
+    // Find the SELECT and FROM clauses
+    if let Some(select_start) = query_upper.find("SELECT") {
+        let after_select = &query[select_start + 6..];
+        
+        // Find FROM to get the end of column list
+        let from_pos = after_select.to_uppercase().find("FROM")
+            .or_else(|| after_select.to_uppercase().find("GROUP"))
+            .or_else(|| after_select.to_uppercase().find("ORDER"))
+            .or_else(|| after_select.to_uppercase().find("LIMIT"))
+            .unwrap_or(after_select.len());
+        
+        let columns_str = &after_select[..from_pos].trim();
+        
+        // Split by comma and extract column names/aliases
+        let columns: Vec<String> = columns_str
+            .split(',')
+            .enumerate()
+            .map(|(i, col)| {
+                let col_trim = col.trim();
+                
+                // Check for AS alias
+                if let Some(as_pos) = col_trim.to_uppercase().rfind(" AS ") {
+                    col_trim[as_pos + 4..].trim().to_string()
+                } else {
+                    // No alias - take the last part after any dots or spaces
+                    col_trim
+                        .split_whitespace()
+                        .last()
+                        .unwrap_or(&format!("col{}", i))
+                        .split('.')
+                        .last()
+                        .unwrap_or(&format!("col{}", i))
+                        .trim_matches(|c| c == '(' || c == ')' || c == '"' || c == '\'')
+                        .to_string()
+                }
+            })
+            .collect();
+        
+        return columns;
+    }
+    
+    // Fallback: return generic column names
+    vec!["col0".to_string()]
+}
+
+#[tauri::command]
+pub fn execute_sql_query(project_path: String, query: String) -> Result<QueryResult, String> {
+    let db_path = std::path::Path::new(&project_path)
+        .join("data")
+        .join("project_data.db");
+    
+    let conn = Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open database: {}", e))?;
+
+    // Simple approach: parse column names from the SQL SELECT clause
+    // The AI generates SQL like "SELECT OrderDate, SUM(Total) AS total_sales"
+    // We can extract column names/aliases from this
+    let column_names = extract_column_names_from_sql(&query);
+    
+    // Execute the query and collect results
+    let mut stmt = conn
+        .prepare(&query)
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+    
+    let mut rows = stmt
+        .query([])
+        .map_err(|e| format!("Failed to execute query: {}", e))?;
+
+    let mut data: Vec<Vec<String>> = Vec::new();
+    let column_count = column_names.len(); // Use parsed column count instead of stmt.column_count()
+
+    while let Some(row) = rows
+        .next()
+        .map_err(|e| format!("Failed to get next row: {}", e))?
+    {
+        let mut row_values = Vec::new();
+        for i in 0..column_count {
+            let value_str = match row.get_ref(i) {
+                Ok(val_ref) => {
+                    use duckdb::types::ValueRef;
+                    match val_ref {
+                        ValueRef::Null => "".to_string(),
+                        ValueRef::Boolean(b) => b.to_string(),
+                        ValueRef::TinyInt(i) => i.to_string(),
+                        ValueRef::SmallInt(i) => i.to_string(),
+                        ValueRef::Int(i) => i.to_string(),
+                        ValueRef::BigInt(i) => i.to_string(),
+                        ValueRef::HugeInt(i) => i.to_string(),
+                        ValueRef::UTinyInt(i) => i.to_string(),
+                        ValueRef::USmallInt(i) => i.to_string(),
+                        ValueRef::UInt(i) => i.to_string(),
+                        ValueRef::UBigInt(i) => i.to_string(),
+                        ValueRef::Float(f) => f.to_string(),
+                        ValueRef::Double(f) => f.to_string(),
+                        ValueRef::Text(s) => String::from_utf8_lossy(s).to_string(),
+                        ValueRef::Blob(b) => format!("<BLOB {} bytes>", b.len()),
+                        _ => format!("{:?}", val_ref),
+                    }
+                }
+                Err(_) => "".to_string(),
+            };
+            row_values.push(value_str);
+        }
+        data.push(row_values);
+    }
+
+    Ok(QueryResult {
+        columns: column_names,
+        data,
+    })
+}

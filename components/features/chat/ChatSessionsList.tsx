@@ -1,13 +1,8 @@
 "use client";
 
-import { MessageSquare, Plus, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useChat, type ChatSession } from "@/hooks/use-chat";
-import { useLayout } from "@/hooks/use-layout";
-import { useTabs } from "@/hooks/use-tabs";
-import { cn } from "@/lib/utils";
+import { MessageSquare, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -19,8 +14,13 @@ import {
 	AlertDialogTitle,
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import { type ChatSession, useChat } from "@/hooks/use-chat";
+import { useLayout } from "@/hooks/use-layout";
+import { useTabs } from "@/hooks/use-tabs";
+import { cn } from "@/lib/utils";
 import { ChatInterface } from "./ChatInterface";
 
 export function ChatSessionsList() {
@@ -192,8 +192,8 @@ export function ChatSessionsList() {
 										<AlertDialogHeader>
 											<AlertDialogTitle>Delete Chat Session</AlertDialogTitle>
 											<AlertDialogDescription>
-												Are you sure you want to delete this chat session?
-												This action cannot be undone.
+												Are you sure you want to delete this chat session? This
+												action cannot be undone.
 											</AlertDialogDescription>
 										</AlertDialogHeader>
 										<AlertDialogFooter>

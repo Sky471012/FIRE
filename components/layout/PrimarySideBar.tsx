@@ -1,7 +1,7 @@
 "use client";
 
-import { FileExplorer } from "@/components/features/filesystem/FileExplorer";
 import { ChatSessionsList } from "@/components/features/chat/ChatSessionsList";
+import { FileExplorer } from "@/components/features/filesystem/FileExplorer";
 import { DatasetsList } from "@/components/features/project/DatasetsList";
 import { useLayout } from "@/hooks/use-layout";
 

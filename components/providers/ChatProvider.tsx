@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useProject } from "@/hooks/use-project";
 import { useChat } from "@/hooks/use-chat";
+import { useProject } from "@/hooks/use-project";
 
 /**
  * Provider component that synchronizes project path with chat store

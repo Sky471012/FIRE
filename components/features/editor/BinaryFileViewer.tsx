@@ -1,6 +1,6 @@
 "use client";
 
-import { FileX, AlertCircle } from "lucide-react";
+import { AlertCircle, FileX } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface BinaryFileViewerProps {
@@ -48,4 +48,3 @@ export function BinaryFileViewer({ filePath }: BinaryFileViewerProps) {
 		</div>
 	);
 }
-

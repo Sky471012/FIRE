@@ -125,6 +125,49 @@ pub fn run() {
             logger::internal_log_info("✓ Application setup complete");
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if window.label() == "main" {
+                if let tauri::WindowEvent::CloseRequested { .. } = event {
+                    // Cleanup server process when main window is closing
+                    logger::internal_log_info("Main window closing, cleaning up server process...");
+
+                    if let Some(app_state) = window.try_state::<commands::AppState>() {
+                        if let Ok(mut server_process) = app_state.server_process.lock() {
+                            if let Some(mut child) = server_process.take() {
+                                let pid = child.id();
+                                logger::internal_log_info(&format!(
+                                    "Stopping server process (PID: {}) on window close...",
+                                    pid
+                                ));
+
+                                match child.try_wait() {
+                                    Ok(Some(_)) => {
+                                        logger::internal_log_info("Server process had already exited");
+                                    }
+                                    Ok(None) | Err(_) => {
+                                        #[cfg(target_os = "windows")]
+                                        {
+                                            use std::process::Command;
+                                            let _ = Command::new("taskkill")
+                                                .args(["/F", "/T", "/PID", &pid.to_string()])
+                                                .output();
+                                        }
+
+                                        #[cfg(not(target_os = "windows"))]
+                                        {
+                                            let _ = child.kill();
+                                        }
+
+                                        let _ = child.wait();
+                                        logger::internal_log_info("Server process stopped successfully");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             greet,
             logger::log_info,
@@ -186,6 +229,7 @@ pub fn run() {
             db::drop_table,
             db::truncate_table,
             db::get_table_schema,
+            db::execute_sql_query,
             // File operations commands
             file_operations::create_file,
             file_operations::create_folder,

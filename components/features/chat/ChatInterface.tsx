@@ -1,18 +1,23 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
-import { Send, Loader2, MessageSquare, Sparkles, PlayCircle } from "lucide-react";
+import {
+	Loader2,
+	MessageSquare,
+	PlayCircle,
+	Send,
+	Sparkles,
+	User,
+	Bot,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useChat, type ChatMessage } from "@/hooks/use-chat";
+import { Textarea } from "@/components/ui/textarea";
+import { type ChatMessage, useChat } from "@/hooks/use-chat";
 import { usePythonServer } from "@/hooks/use-python-server";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeHighlight from "rehype-highlight";
-import rehypeRaw from "rehype-raw";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MessageWithVisualization } from "./MessageWithVisualization";
 
 export function ChatInterface() {
 	const {
@@ -25,8 +30,13 @@ export function ChatInterface() {
 		error,
 		clearError,
 		serverRequired,
+		currentProjectPath,
 	} = useChat();
-	const { isRunning: isServerRunning, startServer, isLoading: isServerLoading } = usePythonServer();
+	const {
+		isRunning: isServerRunning,
+		startServer,
+		isLoading: isServerLoading,
+	} = usePythonServer();
 
 	const [inputMessage, setInputMessage] = useState("");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -119,14 +129,41 @@ export function ChatInterface() {
 				<ScrollArea className="h-full">
 					<div className="px-4 py-6 space-y-6 max-w-5xl mx-auto">
 						{messages.length === 0 ? (
-							<div className="flex flex-col items-center justify-center py-20 text-center">
-								<div className="mb-6 p-4 rounded-full bg-muted/50">
-									<Sparkles className="h-10 w-10 text-muted-foreground" />
+							<div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in-0 slide-in-from-bottom-8 duration-700">
+								<div className="mb-8 p-6 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 shadow-lg">
+									<Sparkles className="h-12 w-12 text-primary animate-pulse" />
 								</div>
-								<h3 className="text-lg font-semibold mb-2">Start a Conversation</h3>
-								<p className="text-sm text-muted-foreground max-w-md">
-									Ask questions about your data, request visualizations, or explore insights using AI.
+								<h3 className="text-2xl font-bold mb-3 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+									Start a Conversation
+								</h3>
+								<p className="text-sm text-muted-foreground max-w-md mb-8 leading-relaxed">
+									Ask questions about your data, request visualizations, or
+									explore insights using AI-powered analysis.
 								</p>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl w-full px-4">
+									<div className="p-4 rounded-xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer group">
+										<div className="flex items-start gap-3">
+											<div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+												<MessageSquare className="h-4 w-4 text-primary" />
+											</div>
+											<div className="text-left">
+												<p className="text-xs font-medium mb-1">Data Analysis</p>
+												<p className="text-[10px] text-muted-foreground">Explore patterns and trends</p>
+											</div>
+										</div>
+									</div>
+									<div className="p-4 rounded-xl bg-card border border-border/50 hover:border-primary/50 hover:shadow-md transition-all duration-200 cursor-pointer group">
+										<div className="flex items-start gap-3">
+											<div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
+												<Sparkles className="h-4 w-4 text-primary" />
+											</div>
+											<div className="text-left">
+												<p className="text-xs font-medium mb-1">Visualizations</p>
+												<p className="text-[10px] text-muted-foreground">Create charts and graphs</p>
+											</div>
+										</div>
+									</div>
+								</div>
 							</div>
 						) : (
 							<>
@@ -134,122 +171,107 @@ export function ChatInterface() {
 									<div
 										key={`${message.role}-${index}`}
 										className={cn(
-											"flex gap-4 group",
+											"flex gap-4 group animate-in fade-in-0 slide-in-from-bottom-4 duration-500",
 											message.role === "user" ? "justify-end" : "justify-start",
 										)}
 									>
+										{/* Avatar for assistant messages */}
 										{message.role === "assistant" && (
-											<div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center mt-1">
-												<Sparkles className="h-4 w-4 text-primary" />
+											<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+												<Bot className="h-4 w-4 text-primary" />
 											</div>
 										)}
+
 										<div
 											className={cn(
-												"flex flex-col gap-2 max-w-[75%]",
+												"flex flex-col gap-2 max-w-[80%]",
 												message.role === "user" && "items-end",
 											)}
 										>
 											<div
 												className={cn(
-													"rounded-lg px-4 py-3 shadow-sm",
+													"rounded-2xl px-5 py-4 shadow-sm transition-all duration-200",
 													message.role === "user"
-														? "bg-primary text-primary-foreground"
-														: "bg-muted border border-border",
+														? "bg-gradient-to-br from-primary to-primary/90 text-primary-foreground"
+														: "bg-card border border-border/50 hover:border-border hover:shadow-md",
 												)}
 											>
-												<div className="text-sm leading-relaxed prose">
-													<ReactMarkdown
-														remarkPlugins={[remarkGfm]}
-														rehypePlugins={[rehypeHighlight, rehypeRaw]}
-														components={{
-															// Custom styling for code blocks
-															code: ({ className, children, ...props }: any) => {
-																const isInline = !className?.includes('language-');
-																return isInline ? (
-																	<code className="px-1.5 py-0.5 rounded bg-background/50 text-xs font-mono border border-border/50" {...props}>
-																		{children}
-																	</code>
-																) : (
-																	<code className={className} {...props}>
-																		{children}
-																	</code>
-																);
-															},
-															// Custom styling for links
-															a: ({ children, ...props }: any) => (
-																<a 
-																	className={cn(
-																		"underline underline-offset-2 hover:opacity-80 transition-opacity",
-																		message.role === "user" ? "text-primary-foreground" : "text-primary"
-																	)} 
-																	target="_blank" 
-																	rel="noopener noreferrer" 
-																	{...props}
-																>
-																	{children}
-																</a>
-															),
-														}}
-													>
-														{message.content}
-													</ReactMarkdown>
+												<div className={cn(
+													"text-sm leading-relaxed",
+													message.role === "assistant" && "text-foreground"
+												)}>
+													<MessageWithVisualization
+														content={message.content}
+														projectPath={currentProjectPath}
+														isUserMessage={message.role === "user"}
+													/>
 												</div>
 											</div>
-										{message.created_at && (
-											<span
-												className={cn(
-													"text-[10px] text-muted-foreground px-1",
-												)}
-											>
-												{new Date(message.created_at).toLocaleTimeString([], {
-													hour: "2-digit",
-													minute: "2-digit",
-												})}
-											</span>
+											{message.created_at && (
+												<span
+													className={cn(
+														"text-[10px] text-muted-foreground px-2 flex items-center gap-1",
+														message.role === "user" && "flex-row-reverse"
+													)}
+												>
+													{message.role === "user" && (
+														<User className="h-3 w-3" />
+													)}
+													{new Date(message.created_at).toLocaleTimeString([], {
+														hour: "2-digit",
+														minute: "2-digit",
+													})}
+												</span>
+											)}
+										</div>
+
+										{/* Avatar for user messages */}
+										{message.role === "user" && (
+											<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+												<User className="h-4 w-4 text-primary" />
+											</div>
 										)}
 									</div>
-									{message.role === "user" && (
-										<div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/90 flex items-center justify-center mt-1 text-primary-foreground font-medium text-xs">
-											You
+								))}
+								{isSending && (
+									<div className="flex gap-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+											<Bot className="h-4 w-4 text-primary" />
 										</div>
-									)}
-								</div>
-							))}
-							{isSending && (
-								<div className="flex gap-4">
-									<div className="flex-shrink-0 w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center mt-1">
-										<Sparkles className="h-4 w-4 text-primary" />
-									</div>
-									<div className="flex flex-col gap-2 max-w-[75%]">
-										<div className="rounded-lg px-4 py-3 bg-muted border border-border shadow-sm">
-											<div className="flex items-center gap-2 text-sm text-muted-foreground">
-												<Loader2 className="h-4 w-4 animate-spin" />
-												<span>Thinking...</span>
+										<div className="flex flex-col gap-2 max-w-[80%]">
+											<div className="rounded-2xl px-5 py-4 bg-card border border-border/50 shadow-sm">
+												<div className="flex items-center gap-3 text-sm text-muted-foreground">
+													<Loader2 className="h-4 w-4 animate-spin text-primary" />
+													<span className="flex gap-1">
+														<span className="animate-bounce" style={{ animationDelay: '0ms' }}>.</span>
+														<span className="animate-bounce" style={{ animationDelay: '150ms' }}>.</span>
+														<span className="animate-bounce" style={{ animationDelay: '300ms' }}>.</span>
+													</span>
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-							)}
-							<div ref={messagesEndRef} />
-						</>
-					)}
+								)}
+								<div ref={messagesEndRef} />
+							</>
+						)}
 					</div>
 				</ScrollArea>
 			</div>
 
 			{/* Input Area */}
-			<div className="border-t border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+			<div className="border-t border-border/50 bg-background/95 backdrop-blur-md supports-[backdrop-filter]:bg-background/80 shadow-lg">
 				<div className="max-w-5xl mx-auto px-4 py-4">
 					{/* Server Required Alert */}
 					{serverRequired && !isServerRunning && (
-						<Alert className="mb-4 bg-primary/5 border-primary/20">
+						<Alert className="mb-4 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 shadow-sm">
 							{isServerLoading ? (
 								<Loader2 className="h-4 w-4 text-primary animate-spin" />
 							) : (
 								<PlayCircle className="h-4 w-4 text-primary" />
 							)}
 							<AlertDescription className="flex items-center justify-between">
-								<span className="text-sm">
+								<span className="text-sm font-medium">
 									{isServerLoading
 										? "Initializing AI server... This may take a few moments."
 										: "The AI server is required to send messages. Start the server to continue chatting."}
@@ -258,7 +280,7 @@ export function ChatInterface() {
 									onClick={startServer}
 									disabled={isServerLoading}
 									size="sm"
-									className="ml-4"
+									className="ml-4 shadow-sm"
 								>
 									{isServerLoading ? (
 										<>
@@ -277,29 +299,46 @@ export function ChatInterface() {
 					)}
 
 					<div className="flex gap-3 items-end">
-						<div className="flex-1 relative">
+						<div className="flex-1 relative group">
 							<Textarea
 								ref={textareaRef}
 								value={inputMessage}
-								onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputMessage(e.target.value)}
+								onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+									setInputMessage(e.target.value)
+								}
 								onKeyDown={handleKeyDown}
 								placeholder={
 									serverRequired && !isServerRunning
 										? "Start the server to send messages..."
 										: "Ask a question about your data..."
 								}
-								className="min-h-[52px] max-h-[200px] resize-none pr-12 rounded-lg shadow-sm"
+								className={cn(
+									"min-h-[56px] max-h-[200px] resize-none pr-20 rounded-xl shadow-md transition-all duration-200",
+									"border-border/50 focus:border-primary/50 focus:shadow-lg focus:ring-2 focus:ring-primary/20",
+									"bg-background/50 backdrop-blur-sm"
+								)}
 								disabled={isSending || (serverRequired && !isServerRunning)}
 							/>
-							<div className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
-								{inputMessage.length > 0 && `${inputMessage.length} chars`}
+							<div className="absolute bottom-3 right-3 flex items-center gap-2">
+								{inputMessage.length > 0 && (
+									<span className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-1 rounded">
+										{inputMessage.length}
+									</span>
+								)}
 							</div>
 						</div>
 						<Button
 							onClick={handleSend}
-							disabled={!inputMessage.trim() || isSending || (serverRequired && !isServerRunning)}
+							disabled={
+								!inputMessage.trim() ||
+								isSending ||
+								(serverRequired && !isServerRunning)
+							}
 							size="icon"
-							className="h-[52px] w-[52px] flex-shrink-0 rounded-lg shadow-sm"
+							className={cn(
+								"h-[56px] w-[56px] flex-shrink-0 rounded-xl shadow-md transition-all duration-200",
+								"hover:shadow-lg hover:scale-105 active:scale-95"
+							)}
 						>
 							{isSending ? (
 								<Loader2 className="h-5 w-5 animate-spin" />
@@ -308,12 +347,27 @@ export function ChatInterface() {
 							)}
 						</Button>
 					</div>
-					<div className="flex items-center justify-between mt-2 px-1">
-						<p className="text-[10px] text-muted-foreground">
-							<kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border border-border">Enter</kbd> to send
-							<span className="mx-1">•</span>
-							<kbd className="px-1.5 py-0.5 text-[10px] bg-muted rounded border border-border">Shift + Enter</kbd> for new line
+					<div className="flex items-center justify-between mt-3 px-1">
+						<p className="text-[10px] text-muted-foreground flex items-center gap-2">
+							<span className="flex items-center gap-1">
+								<kbd className="px-1.5 py-0.5 text-[10px] bg-muted/80 rounded border border-border/50 font-mono">
+									Enter
+								</kbd>
+								<span>to send</span>
+							</span>
+							<span className="text-border">•</span>
+							<span className="flex items-center gap-1">
+								<kbd className="px-1.5 py-0.5 text-[10px] bg-muted/80 rounded border border-border/50 font-mono">
+									Shift + Enter
+								</kbd>
+								<span>for new line</span>
+							</span>
 						</p>
+						{messages.length > 0 && (
+							<p className="text-[10px] text-muted-foreground">
+								{messages.length} {messages.length === 1 ? "message" : "messages"}
+							</p>
+						)}
 					</div>
 				</div>
 			</div>

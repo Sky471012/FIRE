@@ -41,3 +41,54 @@ impl AppState {
         }
     }
 }
+
+impl Drop for AppState {
+    fn drop(&mut self) {
+        let _ = crate::utils::logger::log_info("Cleaning up AppState...".to_string());
+
+        // Kill the server process if it's running
+        if let Ok(mut server_process) = self.server_process.lock() {
+            if let Some(mut child) = server_process.take() {
+                let pid = child.id();
+                let _ = crate::utils::logger::log_info(format!(
+                    "Stopping server process (PID: {}) on application shutdown...",
+                    pid
+                ));
+
+                // Try to check if process is still running
+                match child.try_wait() {
+                    Ok(Some(_)) => {
+                        // Process already exited
+                        let _ = crate::utils::logger::log_info(
+                            "Server process had already exited".to_string()
+                        );
+                    }
+                    Ok(None) | Err(_) => {
+                        // Process is running or we can't check - kill it
+                        #[cfg(target_os = "windows")]
+                        {
+                            use std::process::Command;
+                            // Use taskkill to ensure the entire process tree is killed
+                            let _ = Command::new("taskkill")
+                                .args(["/F", "/T", "/PID", &pid.to_string()])
+                                .output();
+                        }
+
+                        #[cfg(not(target_os = "windows"))]
+                        {
+                            let _ = child.kill();
+                        }
+
+                        let _ = child.wait();
+                        let _ = crate::utils::logger::log_info(
+                            "Server process stopped successfully".to_string()
+                        );
+                    }
+                }
+            }
+        }
+
+        let _ = crate::utils::logger::log_info("✓ AppState cleanup complete".to_string());
+    }
+}
+

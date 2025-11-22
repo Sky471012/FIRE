@@ -1,12 +1,7 @@
 "use client";
 
-import { Database, Plus, Trash2, RefreshCw, FileUp, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useDatasets } from "@/hooks/use-datasets";
-import { useProject } from "@/hooks/use-project";
-import type { TableInfo } from "@/hooks/use-datasets";
-import { cn } from "@/lib/utils";
+import { Database, FileUp, Globe, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -17,14 +12,19 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect } from "react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { TableInfo } from "@/hooks/use-datasets";
+import { useDatasets } from "@/hooks/use-datasets";
+import { useProject } from "@/hooks/use-project";
+import { cn } from "@/lib/utils";
 import { UrlIngestDialog } from "./UrlIngestDialog";
 
 export function DatasetsList() {
@@ -175,11 +175,7 @@ export function DatasetsList() {
 							</p>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
-									<Button
-										variant="outline"
-										size="sm"
-										disabled={isImporting}
-									>
+									<Button variant="outline" size="sm" disabled={isImporting}>
 										<Plus className="h-3.5 w-3.5 mr-1.5" />
 										Import Dataset
 									</Button>

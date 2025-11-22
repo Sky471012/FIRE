@@ -11,6 +11,7 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { ChatInterface } from "@/components/features/chat/ChatInterface";
 import {
 	AlertDialog,
 	AlertDialogContent,
@@ -20,20 +21,30 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { useProject } from "@/hooks/use-project";
-import { useSettings } from "@/hooks/use-settings";
 import { useChat } from "@/hooks/use-chat";
-import { useTabs } from "@/hooks/use-tabs";
-import { usePythonServer } from "@/hooks/use-python-server";
 import { useLayout } from "@/hooks/use-layout";
-import { ChatInterface } from "@/components/features/chat/ChatInterface";
+import { useProject } from "@/hooks/use-project";
+import { usePythonServer } from "@/hooks/use-python-server";
+import { useSettings } from "@/hooks/use-settings";
+import { useTabs } from "@/hooks/use-tabs";
 import { cn } from "@/lib/utils";
 
 export function WelcomePage() {
-	const { openProject, createProject, recentProjects, openRecentProject, currentProjectPath } =
-		useProject();
+	const {
+		openProject,
+		createProject,
+		recentProjects,
+		openRecentProject,
+		currentProjectPath,
+	} = useProject();
 	const { settings } = useSettings();
-	const { sessions, loadSessions, loadSessionHistory, createSession, setCurrentProjectPath } = useChat();
+	const {
+		sessions,
+		loadSessions,
+		loadSessionHistory,
+		createSession,
+		setCurrentProjectPath,
+	} = useChat();
 	const { addTab } = useTabs();
 	const { isRunning: isServerRunning } = usePythonServer();
 	const { setActiveView } = useLayout();
@@ -146,7 +157,6 @@ export function WelcomePage() {
 	};
 
 	const handleOpenRecentChat = async (sessionId: string) => {
-
 		try {
 			setIsLoading(true);
 			await loadSessionHistory(sessionId);
@@ -178,17 +188,11 @@ export function WelcomePage() {
 
 			if (diffMins < 1) return "Just now";
 			if (diffMins < 60)
-				return `${diffMins} min${
-					diffMins > 1 ? "s" : ""
-				} ago`.trim();
+				return `${diffMins} min${diffMins > 1 ? "s" : ""} ago`.trim();
 			if (diffHours < 24)
-				return `${diffHours} hour${
-					diffHours > 1 ? "s" : ""
-				} ago`.trim();
+				return `${diffHours} hour${diffHours > 1 ? "s" : ""} ago`.trim();
 			if (diffDays < 7)
-				return `${diffDays} day${
-					diffDays > 1 ? "s" : ""
-				} ago`.trim();
+				return `${diffDays} day${diffDays > 1 ? "s" : ""} ago`.trim();
 
 			return date.toLocaleDateString();
 		} catch {
@@ -314,7 +318,9 @@ export function WelcomePage() {
 									<div className="p-8 text-center text-sm text-muted-foreground">
 										<Folder className="h-8 w-8 mx-auto mb-2 opacity-50" />
 										<p>No recent projects</p>
-										<p className="text-xs mt-1">Open or create a project to get started</p>
+										<p className="text-xs mt-1">
+											Open or create a project to get started
+										</p>
 									</div>
 								) : (
 									recentProjects.slice(0, 5).map((project) => (
@@ -359,7 +365,9 @@ export function WelcomePage() {
 									<div className="p-8 text-center text-sm text-muted-foreground">
 										<MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
 										<p>No recent chats</p>
-										<p className="text-xs mt-1">Start a new chat to get started</p>
+										<p className="text-xs mt-1">
+											Start a new chat to get started
+										</p>
 									</div>
 								) : (
 									sessions.slice(0, 5).map((session) => (
