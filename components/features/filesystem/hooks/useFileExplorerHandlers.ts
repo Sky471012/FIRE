@@ -32,7 +32,7 @@ export function useFileExplorerHandlers(
 		showHiddenFiles,
 	} = useFileSystem();
 
-	const { addTab, tabs, setActiveTab } = useTabs();
+	const { addTab } = useTabs();
 
 	const loadChildEntries = useCallback(
 		async (parent: FileSystemEntry) => {
