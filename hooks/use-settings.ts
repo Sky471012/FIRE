@@ -101,6 +101,25 @@ export function useSettings() {
 		[],
 	);
 
+	const updateGroqApiKey = useCallback(async (apiKey: string) => {
+		try {
+			await invoke("update_groq_api_key", { apiKey });
+		} catch (err) {
+			console.error("Failed to update GROQ API key:", err);
+			throw err;
+		}
+	}, []);
+
+	const getGroqApiKey = useCallback(async (): Promise<string | null> => {
+		try {
+			const result = await invoke<string | null>("get_groq_api_key");
+			return result;
+		} catch (err) {
+			console.error("Failed to get GROQ API key:", err);
+			throw err;
+		}
+	}, []);
+
 	return {
 		settings,
 		loading,
@@ -108,5 +127,7 @@ export function useSettings() {
 		loadSettings,
 		updateGeneralSettings,
 		updateAppearanceSettings,
+		updateGroqApiKey,
+		getGroqApiKey,
 	};
 }

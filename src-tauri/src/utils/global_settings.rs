@@ -112,12 +112,15 @@ impl Default for GeneralSettings {
 pub struct ConfigSettings {
     #[serde(default)]
     pub venv: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub groq_api_key: Option<String>,
 }
 
 impl Default for ConfigSettings {
     fn default() -> Self {
         Self {
             venv: false,
+            groq_api_key: None,
         }
     }
 }
@@ -173,8 +176,8 @@ impl GlobalSettings {
         let contents = read_config_file(&path)?;
 
         // Parse as a flat map with "window.{label}" keys
-        let toml_value: toml::Value = toml::from_str(&contents)
-            .context("Failed to parse global_settings.toml")?;
+        let toml_value: toml::Value =
+            toml::from_str(&contents).context("Failed to parse global_settings.toml")?;
 
         let mut windows = HashMap::new();
         let mut general = GeneralSettings::default();
@@ -185,7 +188,9 @@ impl GlobalSettings {
             // Parse window states
             if let Some(toml::Value::Table(window_table)) = table.get("window") {
                 for (key, value) in window_table.iter() {
-                    if let Ok(window_state) = toml::from_str::<WindowState>(&toml::to_string(value)?) {
+                    if let Ok(window_state) =
+                        toml::from_str::<WindowState>(&toml::to_string(value)?)
+                    {
                         windows.insert(key.clone(), window_state);
                     }
                 }
@@ -193,21 +198,27 @@ impl GlobalSettings {
 
             // Parse general settings
             if let Some(value) = table.get("general") {
-                if let Ok(parsed_general) = toml::from_str::<GeneralSettings>(&toml::to_string(value)?) {
+                if let Ok(parsed_general) =
+                    toml::from_str::<GeneralSettings>(&toml::to_string(value)?)
+                {
                     general = parsed_general;
                 }
             }
 
             // Parse appearance settings
             if let Some(value) = table.get("appearance") {
-                if let Ok(parsed_appearance) = toml::from_str::<AppearanceSettings>(&toml::to_string(value)?) {
+                if let Ok(parsed_appearance) =
+                    toml::from_str::<AppearanceSettings>(&toml::to_string(value)?)
+                {
                     appearance = parsed_appearance;
                 }
             }
 
             // Parse config settings
             if let Some(value) = table.get("config") {
-                if let Ok(parsed_config) = toml::from_str::<ConfigSettings>(&toml::to_string(value)?) {
+                if let Ok(parsed_config) =
+                    toml::from_str::<ConfigSettings>(&toml::to_string(value)?)
+                {
                     config = parsed_config;
                 }
             }
@@ -233,33 +244,32 @@ impl GlobalSettings {
         let mut table = toml::map::Map::new();
 
         // Add general settings
-        let general_str = toml::to_string(&self.general)
-            .context("Failed to serialize general settings")?;
+        let general_str =
+            toml::to_string(&self.general).context("Failed to serialize general settings")?;
         let general_value: toml::Value = toml::from_str(&general_str)
             .context("Failed to parse general settings as TOML value")?;
         table.insert("general".to_string(), general_value);
 
         // Add appearance settings
-        let appearance_str = toml::to_string(&self.appearance)
-            .context("Failed to serialize appearance settings")?;
+        let appearance_str =
+            toml::to_string(&self.appearance).context("Failed to serialize appearance settings")?;
         let appearance_value: toml::Value = toml::from_str(&appearance_str)
             .context("Failed to parse appearance settings as TOML value")?;
         table.insert("appearance".to_string(), appearance_value);
 
         // Add config settings
-        let config_str = toml::to_string(&self.config)
-            .context("Failed to serialize config settings")?;
-        let config_value: toml::Value = toml::from_str(&config_str)
-            .context("Failed to parse config settings as TOML value")?;
+        let config_str =
+            toml::to_string(&self.config).context("Failed to serialize config settings")?;
+        let config_value: toml::Value =
+            toml::from_str(&config_str).context("Failed to parse config settings as TOML value")?;
         table.insert("config".to_string(), config_value);
 
         // Add window states
         let mut window_table = toml::map::Map::new();
         for (label, state) in &self.windows {
-            let state_str = toml::to_string(state)
-                .context("Failed to serialize window state")?;
-            let state_value: toml::Value = toml::from_str(&state_str)
-                .context("Failed to parse window state as TOML value")?;
+            let state_str = toml::to_string(state).context("Failed to serialize window state")?;
+            let state_value: toml::Value =
+                toml::from_str(&state_str).context("Failed to parse window state as TOML value")?;
             window_table.insert(label.clone(), state_value);
         }
 
@@ -275,16 +285,13 @@ impl GlobalSettings {
 
     /// Get window state for a specific window label
     pub fn get_window_state(&self, label: &str) -> WindowState {
-        self.windows
-            .get(label)
-            .cloned()
-            .unwrap_or_else(|| {
-                if label == "main" {
-                    WindowState::main_default()
-                } else {
-                    WindowState::child_default(800, 600)
-                }
-            })
+        self.windows.get(label).cloned().unwrap_or_else(|| {
+            if label == "main" {
+                WindowState::main_default()
+            } else {
+                WindowState::child_default(800, 600)
+            }
+        })
     }
 
     /// Update window state for a specific window label
@@ -306,5 +313,14 @@ impl GlobalSettings {
     pub fn set_venv_configured(&mut self, configured: bool) {
         self.config.venv = configured;
     }
-}
 
+    /// Get the GROQ API key
+    pub fn get_groq_api_key(&self) -> Option<String> {
+        self.config.groq_api_key.clone()
+    }
+
+    /// Set the GROQ API key
+    pub fn set_groq_api_key(&mut self, api_key: Option<String>) {
+        self.config.groq_api_key = api_key;
+    }
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { Palette, User } from "lucide-react";
+import { Key, Palette, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,21 +23,23 @@ import { Switch } from "@/components/ui/switch";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 
-type Category = "general" | "appearance";
+type Category = "general" | "appearance" | "keys";
 
 export default function SettingsPage() {
-	const { settings, loading, updateGeneralSettings, updateAppearanceSettings } =
+	const { settings, loading, updateGeneralSettings, updateAppearanceSettings, updateGroqApiKey, getGroqApiKey } =
 		useSettings();
 	const { theme: currentTheme, setTheme: setNextTheme } = useTheme();
 	const [selectedCategory, setSelectedCategory] = useState<Category>("general");
 	const [userName, setUserName] = useState("");
 	const [showStatusBar, setShowStatusBar] = useState(true);
 	const [statusBarRefreshMs, setStatusBarRefreshMs] = useState("2000");
+	const [groqApiKey, setGroqApiKey] = useState("");
 	const [currentUser, setCurrentUser] = useState<string | null>(null);
 	const [authDialogOpen, setAuthDialogOpen] = useState(false);
 	const [checkingUser, setCheckingUser] = useState(true);
 	const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 	const statusBarDebounceRef = useRef<NodeJS.Timeout | null>(null);
+	const apiKeyDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
 	// Update local state when settings are loaded
 	useEffect(() => {
@@ -49,6 +51,19 @@ export default function SettingsPage() {
 			);
 		}
 	}, [settings]);
+
+	// Load GROQ API key on mount
+	useEffect(() => {
+		const loadApiKey = async () => {
+			try {
+				const key = await getGroqApiKey();
+				setGroqApiKey(key || "");
+			} catch (error) {
+				console.error("Failed to load GROQ API key:", error);
+			}
+		};
+		loadApiKey();
+	}, [getGroqApiKey]);
 
 	// Check for logged-in user on mount
 	useEffect(() => {
@@ -116,6 +131,29 @@ export default function SettingsPage() {
 			}
 		};
 	}, []);
+
+	const handleGroqApiKeyChange = useCallback(
+		(value: string) => {
+			setGroqApiKey(value);
+
+			// Clear existing timer
+			if (apiKeyDebounceRef.current) {
+				clearTimeout(apiKeyDebounceRef.current);
+			}
+
+			// Set new timer to save after 500ms of no typing
+			apiKeyDebounceRef.current = setTimeout(async () => {
+				try {
+					await updateGroqApiKey(value);
+					toast.success("GROQ API key updated successfully");
+				} catch (error) {
+					toast.error("Failed to update GROQ API key");
+					console.error(error);
+				}
+			}, 500);
+		},
+		[updateGroqApiKey],
+	);
 
 	const handleThemeChange = async (value: string) => {
 		// Apply theme immediately in the UI
@@ -194,6 +232,11 @@ export default function SettingsPage() {
 			id: "appearance" as Category,
 			label: "Appearance",
 			icon: Palette,
+		},
+		{
+			id: "keys" as Category,
+			label: "Keys",
+			icon: Key,
 		},
 	];
 
@@ -407,6 +450,46 @@ export default function SettingsPage() {
 														</p>
 													</div>
 												)}
+											</div>
+										</div>
+									</div>
+								)}
+
+								{selectedCategory === "keys" && (
+									<div className="space-y-6">
+										<div>
+											<h2 className="text-2xl font-bold">API Keys</h2>
+											<p className="text-sm text-muted-foreground">
+												Manage your API keys for external services
+											</p>
+										</div>
+
+										<Separator />
+
+										<div className="space-y-4">
+											<div className="space-y-2">
+												<Label htmlFor="groq-api-key">GROQ API Key</Label>
+												<Input
+													id="groq-api-key"
+													type="password"
+													placeholder="Enter your GROQ API key"
+													value={groqApiKey}
+													onChange={(e) => handleGroqApiKeyChange(e.target.value)}
+													className="max-w-md font-mono"
+												/>
+												<p className="text-xs text-muted-foreground">
+													Your API key will be stored securely in your local configuration.
+													Get your key from{" "}
+													<a
+														href="https://console.groq.com/keys"
+														target="_blank"
+														rel="noopener noreferrer"
+														className="text-primary hover:underline"
+													>
+														GROQ Console
+													</a>
+													.
+												</p>
 											</div>
 										</div>
 									</div>

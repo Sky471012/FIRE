@@ -57,10 +57,7 @@ pub fn remove_window_state(state: State<AppState>, label: String) -> Result<(), 
 }
 
 #[tauri::command]
-pub fn update_general_settings(
-    state: State<AppState>,
-    user_name: String,
-) -> Result<(), String> {
+pub fn update_general_settings(state: State<AppState>, user_name: String) -> Result<(), String> {
     let mut settings = state
         .global_settings
         .lock()
@@ -96,3 +93,31 @@ pub fn update_appearance_settings(
         .map_err(|e| format!("Failed to save global settings: {}", e))
 }
 
+#[tauri::command]
+pub fn get_groq_api_key(state: State<AppState>) -> Result<Option<String>, String> {
+    let settings = state
+        .global_settings
+        .lock()
+        .map_err(|e| format!("Failed to lock global settings: {}", e))?;
+    Ok(settings.get_groq_api_key())
+}
+
+#[tauri::command]
+pub fn update_groq_api_key(state: State<AppState>, api_key: String) -> Result<(), String> {
+    let mut settings = state
+        .global_settings
+        .lock()
+        .map_err(|e| format!("Failed to lock global settings: {}", e))?;
+
+    let key_to_save = if api_key.trim().is_empty() {
+        None
+    } else {
+        Some(api_key)
+    };
+
+    settings.set_groq_api_key(key_to_save);
+
+    settings
+        .save()
+        .map_err(|e| format!("Failed to save global settings: {}", e))
+}

@@ -120,7 +120,6 @@ pub async fn start_python_server(state: State<'_, AppState>) -> Result<String, S
         .ok_or_else(|| "Invalid Python path".to_string())?
         .to_string();
 
-
     let _ = crate::utils::logger::log_info(format!("Python command: {}", python_cmd));
     let _ = crate::utils::logger::log_info(format!("Server directory: {}", server_dir.display()));
 
@@ -140,6 +139,23 @@ pub async fn start_python_server(state: State<'_, AppState>) -> Result<String, S
     }
 
     cmd.current_dir(server_dir).stdin(Stdio::null());
+
+    // Get GROQ API key from global settings and set as environment variable
+    {
+        let global_settings = state
+            .global_settings
+            .lock()
+            .map_err(|e| format!("Failed to lock global settings: {}", e))?;
+
+        if let Some(api_key) = global_settings.get_groq_api_key() {
+            cmd.env("GROQ_API_KEY", api_key);
+            let _ = crate::utils::logger::log_info("GROQ API key loaded from settings".to_string());
+        } else {
+            let _ = crate::utils::logger::log_warn(
+                "No GROQ API key configured in settings".to_string(),
+            );
+        }
+    }
 
     // In development, show output for debugging
     // In production, hide console window

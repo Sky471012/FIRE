@@ -39,7 +39,9 @@ pub fn run() {
                 logger::internal_log_info("Checking Python virtual environment...");
 
                 let venv_configured = {
-                    let global_settings = app_state.global_settings.lock()
+                    let global_settings = app_state
+                        .global_settings
+                        .lock()
                         .expect("Failed to lock global settings");
                     let configured = global_settings.get_venv_configured();
                     logger::internal_log_debug(&format!("Current config.venv = {}", configured));
@@ -50,34 +52,50 @@ pub fn run() {
                     Ok(was_initialized) => {
                         if was_initialized {
                             // Reacquire lock to update config
-                            let mut global_settings = app_state.global_settings.lock()
+                            let mut global_settings = app_state
+                                .global_settings
+                                .lock()
                                 .expect("Failed to lock global settings");
                             global_settings.set_venv_configured(true);
 
                             if let Err(e) = global_settings.save() {
-                                logger::internal_log_error(&format!("Failed to save venv configuration: {}", e));
+                                logger::internal_log_error(&format!(
+                                    "Failed to save venv configuration: {}",
+                                    e
+                                ));
                             } else {
-                                logger::internal_log_info("✓ Updated config.venv = true in global_settings.toml");
+                                logger::internal_log_info(
+                                    "✓ Updated config.venv = true in global_settings.toml",
+                                );
                             }
                         }
                     }
                     Err(e) => {
                         let error_msg = e.to_string();
-                        logger::internal_log_error(&format!("Failed to initialize virtual environment: {}", error_msg));
+                        logger::internal_log_error(&format!(
+                            "Failed to initialize virtual environment: {}",
+                            error_msg
+                        ));
 
                         // Check if it's a UV not installed error (not a network error)
                         if error_msg.contains("UV_NOT_INSTALLED") {
-                            logger::internal_log_error("UV is not installed - showing error dialog");
+                            logger::internal_log_error(
+                                "UV is not installed - showing error dialog",
+                            );
                             venv_manager::show_uv_installation_error(&app.handle());
                         } else if !error_msg.contains("NETWORK_ERROR") {
                             // Show error dialog for other non-network errors too
                             logger::internal_log_error("UV command failed - showing error dialog");
                             venv_manager::show_uv_installation_error(&app.handle());
                         } else {
-                            logger::internal_log_error("Network error - skipping UV installation dialog");
+                            logger::internal_log_error(
+                                "Network error - skipping UV installation dialog",
+                            );
                         }
 
-                        logger::internal_log_error("Application will continue, but Python features may not work");
+                        logger::internal_log_error(
+                            "Application will continue, but Python features may not work",
+                        );
                     }
                 }
             }
@@ -86,7 +104,6 @@ pub fn run() {
 
             // Setup main window with saved settings
             if let Some(main_window) = app.get_webview_window("main") {
-
                 // Load window state in a separate scope to drop the mutex guard
                 let window_state = {
                     let global_settings = app_state
@@ -143,7 +160,9 @@ pub fn run() {
 
                                 match child.try_wait() {
                                     Ok(Some(_)) => {
-                                        logger::internal_log_info("Server process had already exited");
+                                        logger::internal_log_info(
+                                            "Server process had already exited",
+                                        );
                                     }
                                     Ok(None) | Err(_) => {
                                         #[cfg(target_os = "windows")]
@@ -160,7 +179,9 @@ pub fn run() {
                                         }
 
                                         let _ = child.wait();
-                                        logger::internal_log_info("Server process stopped successfully");
+                                        logger::internal_log_info(
+                                            "Server process stopped successfully",
+                                        );
                                     }
                                 }
                             }
@@ -187,6 +208,8 @@ pub fn run() {
             commands::remove_window_state,
             commands::update_general_settings,
             commands::update_appearance_settings,
+            commands::get_groq_api_key,
+            commands::update_groq_api_key,
             // Workspace commands
             commands::get_workspace_state,
             commands::save_workspace_state,
