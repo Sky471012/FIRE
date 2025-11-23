@@ -20,6 +20,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useWindowState } from "@/hooks/use-window-state";
+import { useWorkspaceSync } from "@/hooks/use-workspace-sync";
 
 export default function MainLayout({
 	children,
@@ -65,6 +66,9 @@ function MainLayoutContent({
 
 	// Initialize window state management for main window
 	useWindowState("main");
+
+	// Sync workspace state (tabs, layout) with backend when project changes
+	useWorkspaceSync();
 
 	const leftRef = useRef<
 		ImperativePanelHandle & { resize?: (size: number) => void }

@@ -82,7 +82,20 @@ export const useChat = create<ChatState>((set, get) => ({
 	serverRequired: false,
 
 	// Simple setters
-	setCurrentProjectPath: (path) => set({ currentProjectPath: path }),
+	setCurrentProjectPath: (path) => {
+		// Clear chat state when project changes
+		const currentPath = get().currentProjectPath;
+		if (currentPath !== path) {
+			set({ 
+				currentProjectPath: path,
+				sessions: [],
+				currentSessionId: null,
+				messages: [],
+				visualizationSpec: null,
+				error: null,
+			});
+		}
+	},
 	setSessions: (sessions) => set({ sessions }),
 	setCurrentSessionId: (id) => set({ currentSessionId: id }),
 	setMessages: (messages) => set({ messages }),

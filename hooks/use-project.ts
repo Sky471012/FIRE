@@ -22,6 +22,18 @@ export function useProject() {
 		loadRecentProjects();
 	}, []);
 
+	// Listen for project switch events to refresh workspace
+	useEffect(() => {
+		const handleProjectSwitch = () => {
+			loadCurrentProject();
+		};
+
+		window.addEventListener("project-switched", handleProjectSwitch);
+		return () => {
+			window.removeEventListener("project-switched", handleProjectSwitch);
+		};
+	}, []);
+
 	const loadCurrentProject = async () => {
 		try {
 			const path = await invoke<string | null>("get_current_project_path");
@@ -56,11 +68,8 @@ export function useProject() {
 			// Get project name
 			const name = await invoke<string>("get_project_name", { path });
 
-			// Set current project
-			await invoke("set_current_project_path", { path });
-
-			// Add to recent projects
-			await invoke("add_recent_project", { path });
+			// Call the new open_project command which handles hot-reload
+			await invoke("open_project", { path });
 
 			// Update state
 			setCurrentProjectPath(path);
@@ -68,6 +77,11 @@ export function useProject() {
 
 			// Reload recent projects
 			await loadRecentProjects();
+
+			// Emit a custom event to trigger workspace refresh across the app
+			window.dispatchEvent(new CustomEvent("project-switched", { 
+				detail: { path, name } 
+			}));
 
 			return { success: true, name };
 		} catch (error) {
@@ -87,17 +101,11 @@ export function useProject() {
 				throw new Error("Directory is not empty");
 			}
 
-			// Initialize project
-			await invoke("initialize_project", { path });
+			// Call the new create_project command which handles initialization and hot-reload
+			await invoke("create_project", { path });
 
 			// Get project name
 			const name = await invoke<string>("get_project_name", { path });
-
-			// Set current project
-			await invoke("set_current_project_path", { path });
-
-			// Add to recent projects
-			await invoke("add_recent_project", { path });
 
 			// Update state
 			setCurrentProjectPath(path);
@@ -105,6 +113,11 @@ export function useProject() {
 
 			// Reload recent projects
 			await loadRecentProjects();
+
+			// Emit a custom event to trigger workspace refresh across the app
+			window.dispatchEvent(new CustomEvent("project-switched", { 
+				detail: { path, name } 
+			}));
 
 			return { success: true, name };
 		} catch (error) {

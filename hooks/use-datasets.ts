@@ -18,6 +18,7 @@ export function useDatasets() {
 	const loadTables = useCallback(async (projectPath: string) => {
 		setIsLoading(true);
 		setError(null);
+		setTables([]); // Clear existing tables before loading new ones
 		try {
 			// Get the project_data.db path
 			const dbPath = `${projectPath}/data/project_data.db`;

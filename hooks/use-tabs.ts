@@ -26,6 +26,8 @@ interface TabsState {
 	closeOtherTabs: (id: string) => void;
 	closeTabsToRight: (id: string) => void;
 	pinTab: (id: string) => void;
+	loadWorkspaceTabs: (workspaceTabs: Tab[], activeId: string | null) => void;
+	resetToWelcome: () => void;
 }
 
 export const useTabs = create<TabsState>((set, get) => ({
@@ -207,5 +209,46 @@ export const useTabs = create<TabsState>((set, get) => ({
 				tab.id === id ? { ...tab, isPinned: !tab.isPinned } : tab,
 			),
 		}));
+	},
+
+	loadWorkspaceTabs: (workspaceTabs, activeId) => {
+		if (workspaceTabs.length === 0) {
+			// If no tabs in workspace, reset to welcome
+			set({
+				tabs: [
+					{
+						id: "welcome",
+						title: "Welcome",
+						icon: "Flame",
+						isPinned: false,
+						isDirty: false,
+						type: "welcome",
+					},
+				],
+				activeTabId: "welcome",
+			});
+		} else {
+			// Load tabs from workspace
+			set({
+				tabs: workspaceTabs,
+				activeTabId: activeId || workspaceTabs[0]?.id || null,
+			});
+		}
+	},
+
+	resetToWelcome: () => {
+		set({
+			tabs: [
+				{
+					id: "welcome",
+					title: "Welcome",
+					icon: "Flame",
+					isPinned: false,
+					isDirty: false,
+					type: "welcome",
+				},
+			],
+			activeTabId: "welcome",
+		});
 	},
 }));
