@@ -205,6 +205,8 @@ pub fn run() {
             commands::get_project_name,
             commands::get_current_project_path,
             commands::set_current_project_path,
+            commands::open_project,
+            commands::create_project,
             // Window management commands
             commands::create_child_window,
             // File system commands

@@ -25,7 +25,7 @@ impl AppState {
         let global_settings = GlobalSettings::load();
 
         let _ = crate::utils::logger::log_debug("Loading workspace state...".to_string());
-        let workspace = WorkspaceState::load();
+        let workspace = WorkspaceState::load_initial();
 
         let _ = crate::utils::logger::log_debug("Loading recent projects...".to_string());
         let recent_projects = RecentProjects::load();

@@ -1,10 +1,8 @@
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::fs;
-
-use super::utils::{get_fire_dir, read_config_file, write_config_file};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CameraState {
@@ -19,10 +17,23 @@ pub struct CameraState {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TabState {
-    #[serde(rename = "type")]
-    pub tab_type: String, // "map_view", "chart_view", "simulation_view", "notes_view", "chat_view", "file_editor"
     pub id: String,
     pub title: String,
+    #[serde(rename = "type", skip_serializing_if = "Option::is_none")]
+    pub tab_type: Option<String>, // "file", "view", "welcome"
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
+    #[serde(rename = "isDirty", skip_serializing_if = "Option::is_none")]
+    pub is_dirty: Option<bool>,
+    #[serde(rename = "isPinned", skip_serializing_if = "Option::is_none")]
+    pub is_pinned: Option<bool>,
+    #[serde(rename = "filePath", skip_serializing_if = "Option::is_none")]
+    pub file_path: Option<String>,
+    #[serde(rename = "isBinary", skip_serializing_if = "Option::is_none")]
+    pub is_binary: Option<bool>,
+    #[serde(rename = "viewId", skip_serializing_if = "Option::is_none")]
+    pub view_id: Option<String>,
+    // Legacy fields for backwards compatibility
     #[serde(skip_serializing_if = "Option::is_none")]
     pub dataset_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -37,8 +48,6 @@ pub struct TabState {
     pub chat_history_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<HashMap<String, serde_json::Value>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub file_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,95 +73,61 @@ impl Default for WorkspaceState {
 }
 
 impl WorkspaceState {
-    /// Get the path to the legacy global workspace state file (deprecated)
-    fn get_legacy_path() -> Result<PathBuf> {
-        let fire_dir = get_fire_dir()?;
-        Ok(fire_dir.join("workspace.json"))
-    }
-
-    /// Load workspace state from disk (legacy global method), or return defaults if file doesn't exist
-    pub fn load() -> Self {
-        match Self::try_load_legacy() {
-            Ok(state) => {
-                state
-            }
-            Err(e) => {
-                Self::default()
-            }
-        }
-    }
-
-    /// Try to load workspace state from legacy global file, returning an error if it fails
-    fn try_load_legacy() -> Result<Self> {
-        let path = Self::get_legacy_path()?;
-
-        if !path.exists() {
-            return Ok(Self::default());
-        }
-
-        let contents = read_config_file(&path)?;
-        let state: WorkspaceState = serde_json::from_str(&contents)
-            .context("Failed to parse workspace.json")?;
-
-        Ok(state)
-    }
-
-    /// Save workspace state to disk (legacy global method)
-    pub fn save(&self) -> Result<()> {
-        let path = Self::get_legacy_path()?;
-        let contents = serde_json::to_string_pretty(self)
-            .context("Failed to serialize workspace state")?;
-
-        write_config_file(&path, &contents)?;
-
-        Ok(())
-    }
-
-    /// Load workspace state from a specific project's project.toml
+    /// Load workspace state from a specific project's FIRE.toml
     pub fn load_from_project(project_path: &str) -> Result<Self> {
         let project_dir = Path::new(project_path);
-        let toml_path = project_dir.join("project.toml");
+        let toml_path = project_dir.join("FIRE.toml");
 
         if !toml_path.exists() {
             return Ok(Self::default());
         }
 
         let toml_content = fs::read_to_string(&toml_path)
-            .context("Failed to read project.toml")?;
+            .context("Failed to read FIRE.toml")?;
 
         let toml_value: toml::Table = toml::from_str(&toml_content)
-            .context("Failed to parse project.toml")?;
+            .context("Failed to parse FIRE.toml")?;
 
         // Extract workspace section if it exists
         if let Some(workspace_value) = toml_value.get("workspace") {
             // Convert TOML value to JSON then to WorkspaceState
             let json_value = toml_to_json_value(workspace_value);
-            let workspace: WorkspaceState = serde_json::from_value(json_value)
-                .context("Failed to deserialize workspace from project.toml")?;
+            let mut workspace: WorkspaceState = serde_json::from_value(json_value)
+                .context("Failed to deserialize workspace from FIRE.toml")?;
+
+            // Always set the last_open_project_path to the current project path
+            workspace.last_open_project_path = Some(project_path.to_string());
 
             Ok(workspace)
         } else {
-            Ok(Self::default())
+            // Return default workspace with the project path set
+            let mut workspace = Self::default();
+            workspace.last_open_project_path = Some(project_path.to_string());
+            Ok(workspace)
         }
     }
 
-    /// Save workspace state to a specific project's project.toml
+    /// Save workspace state to a specific project's FIRE.toml
     pub fn save_to_project(&self, project_path: &str) -> Result<()> {
         let project_dir = Path::new(project_path);
-        let toml_path = project_dir.join("project.toml");
+        let toml_path = project_dir.join("FIRE.toml");
 
         if !toml_path.exists() {
-            return Err(anyhow::anyhow!("project.toml not found for project: {}", project_path));
+            return Err(anyhow::anyhow!("FIRE.toml not found for project: {}", project_path));
         }
 
         let toml_content = fs::read_to_string(&toml_path)
-            .context("Failed to read project.toml")?;
+            .context("Failed to read FIRE.toml")?;
 
         let mut toml_value: toml::Table = toml::from_str(&toml_content)
-            .context("Failed to parse project.toml")?;
+            .context("Failed to parse FIRE.toml")?;
+
+        // Create a clone without the last_open_project_path field (we don't want to save this)
+        let mut workspace_to_save = self.clone();
+        workspace_to_save.last_open_project_path = None;
 
         // Convert workspace state to TOML value
-        let json_value = serde_json::to_value(self)
+        let json_value = serde_json::to_value(&workspace_to_save)
             .context("Failed to serialize workspace state")?;
         let workspace_toml = json_to_toml_value(json_value)
             .context("Failed to convert workspace to TOML")?;
@@ -165,9 +140,33 @@ impl WorkspaceState {
             .context("Failed to serialize TOML")?;
 
         fs::write(&toml_path, updated_content)
-            .context("Failed to write project.toml")?;
+            .context("Failed to write FIRE.toml")?;
 
         Ok(())
+    }
+
+    /// Load initial workspace state - tries to load from last opened project if available
+    pub fn load_initial() -> Self {
+        // Try to load recent projects to find the last opened project
+        use super::recent_projects::RecentProjects;
+        
+        let recent_projects = RecentProjects::load();
+        let projects = recent_projects.get_projects();
+        
+        if let Some(last_project) = projects.first() {
+            // Try to load workspace from the last opened project
+            match Self::load_from_project(&last_project.path) {
+                Ok(workspace) => {
+                    return workspace;
+                }
+                Err(e) => {
+                    eprintln!("Failed to load workspace from last project: {}", e);
+                }
+            }
+        }
+        
+        // Return default if no recent projects or loading failed
+        Self::default()
     }
 }
 

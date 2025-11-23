@@ -187,6 +187,93 @@ pub fn get_current_project_path(state: State<AppState>) -> Result<Option<String>
     Ok(workspace.last_open_project_path.clone())
 }
 
+#[tauri::command]
+pub fn open_project(state: State<AppState>, path: String) -> Result<(), String> {
+    use crate::utils::workspace::WorkspaceState;
+
+    // 1. Save the current workspace state to the old project's FIRE.toml (if a project is open)
+    {
+        let current_workspace = state
+            .workspace
+            .lock()
+            .map_err(|e| format!("Failed to lock workspace: {}", e))?;
+
+        if let Some(current_project_path) = &current_workspace.last_open_project_path {
+            if current_project_path != &path {
+                // Only save if switching to a different project
+                if let Err(e) = current_workspace.save_to_project(current_project_path) {
+                    eprintln!("Warning: Failed to save workspace to old project: {}", e);
+                    // Don't fail the operation, just log the warning
+                }
+            }
+        }
+    } // Release the lock
+
+    // 2. Load the new workspace state from the new project's FIRE.toml
+    let new_workspace = WorkspaceState::load_from_project(&path)
+        .map_err(|e| format!("Failed to load workspace from project: {}", e))?;
+
+    // 3. Update the in-memory workspace state
+    {
+        let mut workspace = state
+            .workspace
+            .lock()
+            .map_err(|e| format!("Failed to lock workspace: {}", e))?;
+
+        *workspace = new_workspace;
+    }
+
+    // 4. Add to recent projects
+    add_recent_project(state.clone(), path)?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn create_project(state: State<AppState>, path: String) -> Result<(), String> {
+    use crate::utils::workspace::WorkspaceState;
+
+    // 1. Initialize the project (this creates FIRE.toml)
+    initialize_project(path.clone())?;
+
+    // 2. Save the current workspace state to the old project's FIRE.toml (if a project is open)
+    {
+        let current_workspace = state
+            .workspace
+            .lock()
+            .map_err(|e| format!("Failed to lock workspace: {}", e))?;
+
+        if let Some(current_project_path) = &current_workspace.last_open_project_path {
+            if current_project_path != &path {
+                // Only save if switching to a different project
+                if let Err(e) = current_workspace.save_to_project(current_project_path) {
+                    eprintln!("Warning: Failed to save workspace to old project: {}", e);
+                    // Don't fail the operation, just log the warning
+                }
+            }
+        }
+    } // Release the lock
+
+    // 3. Load the new workspace state (will be default since it's a new project)
+    let new_workspace = WorkspaceState::load_from_project(&path)
+        .map_err(|e| format!("Failed to load workspace from project: {}", e))?;
+
+    // 4. Update the in-memory workspace state
+    {
+        let mut workspace = state
+            .workspace
+            .lock()
+            .map_err(|e| format!("Failed to lock workspace: {}", e))?;
+
+        *workspace = new_workspace;
+    }
+
+    // 5. Add to recent projects
+    add_recent_project(state.clone(), path)?;
+
+    Ok(())
+}
+
 #[allow(dead_code)]
 #[tauri::command]
 pub fn set_current_project_path(
@@ -200,7 +287,6 @@ pub fn set_current_project_path(
 
     workspace.last_open_project_path = path;
 
-    workspace
-        .save()
-        .map_err(|e| format!("Failed to save workspace: {}", e))
+    // Note: We no longer call save() here since workspace is now saved per-project
+    Ok(())
 }
