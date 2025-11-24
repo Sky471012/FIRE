@@ -33,6 +33,8 @@ We use the best tool for the job. A lightweight **Tauri (Rust)** shell handles b
 
 ![User Flow](docs/images/user-flow.png)
 
+![Architecture](docs/images/architecture.png)
+
 ### Agentic AI Workflow (Powered by LangGraph)
 This isn't just a chatbot. Our agent uses **LangGraph** to reason cyclically:
 * **Schema Discovery:** Inspects DuckDB table structures before querying to prevent hallucinations.
@@ -59,8 +61,6 @@ Powered by in-process **DuckDB** for analytical SQL and local **ChromaDB**, ensu
 
 FIRE employs a unique hybrid architecture to balance performance and AI capability.
 
-![Architecture](docs/images/architecture.png)
-
 | Component | Tech Stack | Role |
 | :--- | :--- | :--- |
 | **Desktop Host** | Tauri v2 (Rust) | Secure runtime, file system I/O, managing sidecars. |
@@ -80,24 +80,25 @@ Built for the GitLab Hackathon, we leveraged the full power of the GitLab platfo
 ### 1. Project Management (Boards & Milestones)
 We used **GitLab Issue Boards** in a Kanban view to track velocity and ensure nothing fell through the cracks. Complex features like the "LangGraph Agent" were tracked using **Milestones**.
 
-![GitLab Issue Board](docs/images/gitlab_board.png)
-
-![GitLab Milestones](docs/images/Milestones.png)
-
-![GitLab Snippets](docs/images/Snippets.png)
+| Issue Board | Milestones | Snippets |
+|:-----------:|:----------:|:--------:|
+| ![GitLab Issue Board](docs/images/gitlab_board.png) | ![GitLab Milestones](docs/images/Milestones.png) | ![GitLab Snippets](docs/images/Snippets.png) |
 
 ### 2. CI/CD Pipelines
 Automation was key to managing our hybrid stack. Our `.gitlab-ci.yml` ensures that Rust builds don't break Python functionality and vice-versa, utilizing caching for rapid iteration.
 
-![GitLab CI/CD Pipeline](docs/images/gitlab_pipeline.png)
-
 ### 3. Real-Time ChatOps
 We integrated **Telegram with GitLab**. Every push, merge request, and pipeline status is instantly notified to our team channel (`@gitlab_iitb`), drastically reducing communication latency during the hackathon.
 
-![Telegram ChatOps](docs/images/telegram_chatops.png)
+| CI/CD Pipeline | Telegram ChatOps |
+|:--------------:|:----------------:|
+| ![GitLab CI/CD Pipeline](docs/images/gitlab_pipeline.png) | ![Telegram ChatOps](docs/images/telegram_chatops.png) |
 
 ### 4. GitLab Pages
+
 Our public-facing landing page for FIRE is hosted directly via GitLab Pages.
+
+![Landing page](docs/images/landing-page.png)
 
 ---
 
@@ -105,34 +106,18 @@ Our public-facing landing page for FIRE is hosted directly via GitLab Pages.
 
 ### Application Interface
 
-#### Home Screen
-The main workspace where you interact with your data through natural language.
-
-![Home Screen](docs/images/homescreen.png)
-
-#### Data Ingestion
-Load local scientific datasets directly into DuckDB for analysis.
-
-![Local Data Loading](docs/images/local-data-load.png)
-
-#### Settings Panel
-Customize your AI model, API keys, and system preferences.
-
-![Settings](docs/images/settings.png)
+| Home Screen | Data Ingestion | Settings Panel |
+|:-----------:|:--------------:|:--------------:|
+| The main workspace where you interact with your data through natural language. | Load local scientific datasets directly into DuckDB for analysis. | Customize your AI model, API keys, and system preferences. |
+| ![Home Screen](docs/images/homescreen-dark.png) | ![Local Data Loading](docs/images/local-data-load.png) | ![Settings](docs/images/settings.png) |
 
 ### Authentication Flow
 
 FIRE integrates with AWS Cognito for secure user management.
 
-#### Login
-![Login Screen](docs/images/login.png)
-
-#### Sign Up
-![Sign Up Screen](docs/images/signup.png)
-
-#### AWS Integration
-![Amazon Cognito](docs/images/amazon-cognito.png)
-![DynamoDB Storage](docs/images/dynamoDB.png)
+| Login | Sign Up | Amazon Cognito | DynamoDB Storage |
+|:-----:|:-------:|:--------------:|:----------------:|
+| ![Login Screen](docs/images/login.png) | ![Sign Up Screen](docs/images/signup.png) | ![Amazon Cognito](docs/images/amazon-cognito.png) | ![DynamoDB Storage](docs/images/dynamoDB.png) |
 
 ---
 
@@ -140,27 +125,17 @@ FIRE integrates with AWS Cognito for secure user management.
 
 FIRE's AI agent autonomously generates rich, interactive visualizations based on your data queries.
 
-### 3D Globe Visualization
-Render geospatial data on an interactive 3D globe with depth filtering and custom overlays.
-
-![3D Globe](docs/images/3d-globe.png)
-
-### 3D Scatter Plots
-Explore multi-dimensional datasets in 3D space.
-
-![3D Scatter Plot](docs/images/3d-scratter.png)
+| 3D Globe Visualization | 3D Scatter Plots |
+|:----------------------:|:----------------:|
+| Render geospatial data on an interactive 3D globe with depth filtering and custom overlays. | Explore multi-dimensional datasets in 3D space. |
+| ![3D Globe](docs/images/3d-globe.png) | ![3D Scatter Plot](docs/images/3d-scratter.png) |
 
 ### Statistical Charts
 
-#### Line Plots
-Time-series analysis and trend visualization.
-
-![Line Plot](docs/images/line-plot.png)
-
-#### Scatter Plots
-Correlation analysis and pattern discovery.
-
-![Scatter Plot](docs/images/scatter.png)
+| Line Plots | Scatter Plots |
+|:----------:|:-------------:|
+| Time-series analysis and trend visualization. | Correlation analysis and pattern discovery. |
+| ![Line Plot](docs/images/line-plot.png) | ![Scatter Plot](docs/images/scatter.png) |
 
 ### Competitive Advantage
 
