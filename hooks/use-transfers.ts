@@ -61,13 +61,13 @@ export function useTransfers() {
 		}
 	};
 
-	// Poll for transfers every 30 seconds
+	// Poll for transfers every 10 seconds
 	useEffect(() => {
 		checkTransfers(); // Initial check
 
 		const interval = setInterval(() => {
 			checkTransfers();
-		}, 30000); // 30 seconds
+		}, 10000); // 10 seconds
 
 		return () => clearInterval(interval);
 	}, []);
