@@ -7,6 +7,12 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useTabs } from "@/hooks/use-tabs";
 import { fileSystemApi } from "@/lib/filesystem-api";
+import { MarkdownPreview } from "./MarkdownPreview";
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 interface MonacoEditorProps {
 	filePath: string;
@@ -59,6 +65,9 @@ export function MonacoEditor({ filePath, tabId }: MonacoEditorProps) {
 	const handleEditorChange = useCallback(
 		(value: string | undefined) => {
 			if (value === undefined) return;
+
+			// Update content immediately for preview
+			setContent(value);
 
 			// Mark as dirty
 			updateTab(tabId, { isDirty: true });
@@ -118,6 +127,20 @@ export function MonacoEditor({ filePath, tabId }: MonacoEditorProps) {
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [saveFile]);
 
+	// Check if file should show preview
+	const shouldShowPreview = (path: string): boolean => {
+		const ext = path.split(".").pop()?.toLowerCase();
+		return ext === "md" || ext === "markdown" || ext === "tex" || ext === "latex";
+	};
+
+	const isLatexFile = (path: string): boolean => {
+		const ext = path.split(".").pop()?.toLowerCase();
+		return ext === "tex" || ext === "latex";
+	};
+
+	const showPreview = shouldShowPreview(filePath);
+	const isLatex = isLatexFile(filePath);
+
 	// Get file extension for language detection
 	const getLanguage = (path: string): string => {
 		const ext = path.split(".").pop()?.toLowerCase();
@@ -151,6 +174,9 @@ export function MonacoEditor({ filePath, tabId }: MonacoEditorProps) {
 			toml: "toml",
 			ini: "ini",
 			md: "markdown",
+			markdown: "markdown",
+			tex: "latex",
+			latex: "latex",
 			html: "html",
 			css: "css",
 			scss: "scss",
@@ -183,20 +209,47 @@ export function MonacoEditor({ filePath, tabId }: MonacoEditorProps) {
 		);
 	}
 
+	if (!showPreview) {
+		return (
+			<div className="h-full w-full">
+				<Editor
+					height="100%"
+					language={getLanguage(filePath)}
+					value={content}
+					onChange={handleEditorChange}
+					onMount={handleEditorDidMount}
+					theme={theme === "dark" ? "vs-dark" : "light"}
+					options={{
+						automaticLayout: true,
+						wordWrap: "on",
+					}}
+				/>
+			</div>
+		);
+	}
+
 	return (
-		<div className="h-full w-full">
-			<Editor
-				height="100%"
-				language={getLanguage(filePath)}
-				value={content}
-				onChange={handleEditorChange}
-				onMount={handleEditorDidMount}
-				theme={theme === "dark" ? "vs-dark" : "light"}
-				options={{
-					automaticLayout: true,
-					wordWrap: "on",
-				}}
-			/>
-		</div>
+		<ResizablePanelGroup direction="horizontal" className="h-full w-full">
+			<ResizablePanel defaultSize={50} minSize={30}>
+				<div className="h-full w-full">
+					<Editor
+						height="100%"
+						language={getLanguage(filePath)}
+						value={content}
+						onChange={handleEditorChange}
+						onMount={handleEditorDidMount}
+						theme={theme === "dark" ? "vs-dark" : "light"}
+						options={{
+							automaticLayout: true,
+							wordWrap: "on",
+						}}
+					/>
+				</div>
+			</ResizablePanel>
+			<ResizableHandle withHandle />
+			<ResizablePanel defaultSize={50} minSize={30}>
+				<MarkdownPreview content={content} isLatex={isLatex} />
+			</ResizablePanel>
+		</ResizablePanelGroup>
 	);
 }
