@@ -21,6 +21,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useWindowState } from "@/hooks/use-window-state";
 import { useWorkspaceSync } from "@/hooks/use-workspace-sync";
+import { useTabs } from "@/hooks/use-tabs";
 
 export default function MainLayout({
 	children,
@@ -63,6 +64,12 @@ function MainLayoutContent({
 		lastNonZeroLeftSize,
 		lastNonZeroRightSize,
 	} = useSidebar();
+    
+    // Get active tab to check if we should show secondary sidebar
+    const { tabs, activeTabId } = useTabs();
+    const activeTab = tabs.find(t => t.id === activeTabId);
+    const isFluxActive = activeTab?.type === "flux";
+
 
 	// Initialize window state management for main window
 	useWindowState("main");
@@ -157,7 +164,7 @@ function MainLayoutContent({
 									</ResizablePanel>
 
 									{/* Right Sidebar Panel */}
-									{isRightSidebarOpen && (
+									{isRightSidebarOpen && isFluxActive && (
 										<>
 											<ResizableHandle withHandle />
 

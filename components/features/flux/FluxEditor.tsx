@@ -224,6 +224,7 @@ function FluxFlow({ path }: FluxEditorProps) {
   return (
     <div className="w-full h-full" ref={reactFlowWrapper}>
       <ReactFlow
+        proOptions={{hideAttribution: true}}
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
