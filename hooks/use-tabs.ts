@@ -10,7 +10,7 @@ export interface Tab {
 	content?: React.ReactNode;
 	filePath?: string;
 	isBinary?: boolean;
-	type?: "file" | "view" | "welcome";
+	type?: "file" | "view" | "welcome" | "flux";
 	viewId?: string; // For view tabs (chat, datasets, analytics, etc.)
 }
 
@@ -67,7 +67,13 @@ export const useTabs = create<TabsState>((set, get) => ({
 		}
 
 		const id = `tab-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-		const newTab = { ...tab, id };
+        
+        let type = tab.type;
+        if (tab.filePath?.endsWith(".fire")) {
+            type = "flux";
+        }
+
+		const newTab = { ...tab, id, type };
 		set((state) => ({
 			tabs: [...state.tabs, newTab],
 			activeTabId: id,

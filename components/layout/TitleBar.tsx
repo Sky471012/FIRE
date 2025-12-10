@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function TitleBar() {
 	const { tabs, activeTabId, addTab } = useTabs();
+    const activeTab = tabs.find(t => t.id === activeTabId);
 	const {
 		isLeftSidebarOpen,
 		isRightSidebarOpen,
@@ -77,11 +78,13 @@ export function TitleBar() {
 				<button
 					type="button"
 					onClick={toggleRightSidebar}
+                    disabled={activeTab?.type !== "flux"}
 					className={cn(
 						"h-9 w-9 flex items-center justify-center transition-colors",
 						isRightSidebarOpen
 							? "hover:bg-accent/50"
 							: "hover:bg-accent/50 opacity-50",
+                        activeTab?.type !== "flux" && "opacity-20 cursor-not-allowed hover:bg-transparent"
 					)}
 					aria-label="Toggle right sidebar"
 				>

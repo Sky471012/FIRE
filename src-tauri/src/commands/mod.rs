@@ -2,6 +2,7 @@
 pub mod data;
 pub mod file_sharing;
 pub mod filesystem;
+pub mod flux;
 pub mod global_settings;
 pub mod projects;
 pub mod server;

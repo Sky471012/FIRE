@@ -21,7 +21,6 @@ export function MarkdownPreview({ content, isLatex = false }: MarkdownPreviewPro
 	const [debouncedContent, setDebouncedContent] = useState(content);
 	const [latexHtml, setLatexHtml] = useState<string>("");
 	const [latexError, setLatexError] = useState<string>("");
-	const [renderError, setRenderError] = useState<string>("");
 
 	useEffect(() => {
 		setMounted(true);
@@ -31,7 +30,7 @@ export function MarkdownPreview({ content, isLatex = false }: MarkdownPreviewPro
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setDebouncedContent(content);
-			setRenderError(""); // Clear error when content updates
+			setDebouncedContent(content);
 		}, 500);
 
 		return () => clearTimeout(timer);
@@ -166,7 +165,7 @@ export function MarkdownPreview({ content, isLatex = false }: MarkdownPreviewPro
 					</ReactMarkdown>
 			);
 		} catch (error) {
-			setRenderError(String(error));
+			console.error("Markdown rendering error:", error);
 			return (
 				<div className="text-muted-foreground text-sm">
 					Rendering preview...

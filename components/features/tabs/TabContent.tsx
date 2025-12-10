@@ -2,6 +2,7 @@
 
 import { FileTabContent } from "@/components/features/editor";
 import { WelcomePage } from "@/components/pages/WelcomePage";
+import { FluxEditor } from "@/components/features/flux/FluxEditor";
 import { useTabs } from "@/hooks/use-tabs";
 
 export function TabContent() {
@@ -24,6 +25,9 @@ export function TabContent() {
 
 	// Handle file tabs
 	if (activeTab.filePath) {
+        if (activeTab.type === "flux") {
+             return <FluxEditor path={activeTab.filePath} />;
+        }
 		return (
 			<FileTabContent filePath={activeTab.filePath} tabId={activeTab.id} />
 		);

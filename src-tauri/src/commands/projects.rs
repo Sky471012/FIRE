@@ -106,6 +106,11 @@ pub fn initialize_project(path: String) -> Result<(), String> {
     let data_folder = project_path.join("data");
     fs::create_dir(&data_folder).map_err(|e| format!("Failed to create data folder: {}", e))?;
 
+    // Create Pipelines folder
+    let pipelines_folder = project_path.join("Pipelines");
+    fs::create_dir(&pipelines_folder)
+        .map_err(|e| format!("Failed to create Pipelines folder: {}", e))?;
+
     // Extract folder name for project name
     let project_name = project_path
         .file_name()
@@ -161,11 +166,11 @@ pub fn get_project_name(path: String) -> Result<String, String> {
     }
 
     // Read and parse the TOML file
-    let toml_content = fs::read_to_string(&toml_path)
-        .map_err(|e| format!("Failed to read FIRE.toml: {}", e))?;
+    let toml_content =
+        fs::read_to_string(&toml_path).map_err(|e| format!("Failed to read FIRE.toml: {}", e))?;
 
-    let toml_value: toml::Value = toml::from_str(&toml_content)
-        .map_err(|e| format!("Failed to parse FIRE.toml: {}", e))?;
+    let toml_value: toml::Value =
+        toml::from_str(&toml_content).map_err(|e| format!("Failed to parse FIRE.toml: {}", e))?;
 
     // Extract project name
     let project_name = toml_value

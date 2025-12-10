@@ -285,7 +285,10 @@ pub fn run() {
             auth::send_file_to_user,
             auth::check_incoming_transfers,
             auth::accept_transfer,
-            auth::reject_transfer
+            commands::flux::create_flux_view,
+            commands::flux::preview_flux_view,
+            commands::flux::save_view_as_table,
+            commands::flux::get_view_schema
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

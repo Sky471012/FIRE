@@ -75,6 +75,9 @@ export function getFileIcon(fileName: string): string | undefined {
 		bash: "Terminal",
 		zsh: "Terminal",
 		fish: "Terminal",
+
+        // Flux
+        fire: "Workflow",
 	};
 
 	return iconMap[ext || ""] || "File";
