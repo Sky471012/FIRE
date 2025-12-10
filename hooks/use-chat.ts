@@ -40,6 +40,9 @@ interface ChatState {
 	messages: ChatMessage[];
 	isLoading: boolean;
 	isSending: boolean;
+	isStreaming: boolean;
+	streamingContent: string;
+	currentTool: string | null;
 	error: string | null;
 	visualizationSpec: VisualizationSpec | null;
 	currentProjectPath: string | null;
@@ -76,6 +79,9 @@ export const useChat = create<ChatState>((set, get) => ({
 	messages: [],
 	isLoading: false,
 	isSending: false,
+	isStreaming: false,
+	streamingContent: "",
+	currentTool: null,
 	error: null,
 	visualizationSpec: null,
 	currentProjectPath: null,
@@ -236,7 +242,7 @@ export const useChat = create<ChatState>((set, get) => ({
 		}
 	},
 
-	// Send message
+	// Send message with streaming response (ChatGPT-like)
 	sendMessage: async (message: string) => {
 		const dataPath = getDataPath(get().currentProjectPath);
 		const currentSessionId = get().currentSessionId;
@@ -256,6 +262,9 @@ export const useChat = create<ChatState>((set, get) => ({
 		set({
 			messages: [...currentMessages, userMessage],
 			isSending: true,
+			isStreaming: true,
+			streamingContent: "",
+			currentTool: null,
 			error: null,
 		});
 
@@ -263,7 +272,7 @@ export const useChat = create<ChatState>((set, get) => ({
 		serverProcessingState.isProcessing = true;
 
 		try {
-			const response = await fetch(`${API_BASE_URL}/chat`, {
+			const response = await fetch(`${API_BASE_URL}/chat/stream`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -279,24 +288,83 @@ export const useChat = create<ChatState>((set, get) => ({
 				throw new Error(`Failed to send message: ${response.statusText}`);
 			}
 
-			const data = await response.json();
-			// Replace with the full history from server (includes timestamps from DB)
-			set({ messages: data.history || [] });
-
-			// Update visualization spec if present
-			if (data.visualization_spec) {
-				set({ visualizationSpec: data.visualization_spec });
+			const reader = response.body?.getReader();
+			if (!reader) {
+				throw new Error("Failed to get response reader");
 			}
 
-			// Reload sessions to update the title (if this was the first message)
-			await get().loadSessions();
+			const decoder = new TextDecoder();
+			let fullContent = "";
+			let buffer = "";
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				buffer += decoder.decode(value, { stream: true });
+				const lines = buffer.split("\n");
+				
+				// Keep the last incomplete line in the buffer
+				buffer = lines.pop() || "";
+
+				for (const line of lines) {
+					if (line.startsWith("data: ")) {
+						try {
+							const data = JSON.parse(line.slice(6));
+							
+							if (data.type === "token") {
+								fullContent += data.content;
+								set({ streamingContent: fullContent });
+							} else if (data.type === "tool_start") {
+								set({ currentTool: data.tool });
+							} else if (data.type === "done") {
+								// Build the final message content with embedded visualization spec
+								let finalContent = fullContent;
+								
+								// If there's a visualization spec, embed it as a JSON code block
+								// so MessageWithVisualization can parse it
+								if (data.visualization_spec) {
+									finalContent = `${fullContent}\n\n\`\`\`json\n${JSON.stringify(data.visualization_spec, null, 2)}\n\`\`\``;
+								}
+								
+								// Streaming complete - add the full message to messages array
+								const assistantMessage: ChatMessage = {
+									role: "assistant",
+									content: finalContent,
+									created_at: new Date().toISOString(),
+								};
+								
+								set({
+									messages: [...get().messages, assistantMessage],
+									isStreaming: false,
+									streamingContent: "",
+									currentTool: null,
+								});
+
+								// Update visualization spec if present (for any other consumers)
+								if (data.visualization_spec) {
+									set({ visualizationSpec: data.visualization_spec });
+								}
+
+								// Reload sessions to update the title (if this was the first message)
+								await get().loadSessions();
+							} else if (data.type === "error") {
+								throw new Error(data.message);
+							}
+						} catch (parseError) {
+							// Skip invalid JSON lines
+							console.warn("Failed to parse SSE data:", line, parseError);
+						}
+					}
+				}
+			}
 		} catch (err) {
 			const errorMessage =
 				err instanceof Error ? err.message : "Failed to send message";
 			set({ error: errorMessage });
 			console.error("Error sending message:", err);
 			// On error, remove the optimistically added user message
-			set({ messages: currentMessages });
+			set({ messages: currentMessages, isStreaming: false, streamingContent: "" });
 		} finally {
 			// Mark processing as complete
 			serverProcessingState.isProcessing = false;

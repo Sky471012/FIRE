@@ -5,6 +5,8 @@ os.environ.setdefault("TRANSFORMERS_NO_TORCHVISION", "1")
 
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+import asyncio
 from config import GEMINI_API_KEY
 from pydantic import BaseModel
 from app import SimpleSummaryMemory  # import your agent graph + model
@@ -439,6 +441,160 @@ async def chat(req: ChatRequest):
         answer=final_answer.content,
         history=history_with_viz,
         visualization_spec=visualization_spec,
+    )
+
+
+@app.post("/chat/stream")
+async def chat_stream(req: ChatRequest):
+    """Streaming chat endpoint using Server-Sent Events (SSE) for token-by-token responses."""
+    ensure_db_schema(req.data_path)
+    
+    # Check if session exists
+    with duckdb.connect(chat_history_db_path(req.data_path)) as conn:
+        session_exists = conn.execute(
+            "SELECT COUNT(*) FROM sessions WHERE id=?", [req.session_id]
+        ).fetchone()[0]
+        if not session_exists:
+            raise HTTPException(status_code=404, detail="Session not found")
+        
+        # Check if this is the first message in the session
+        message_count = conn.execute(
+            "SELECT COUNT(*) FROM messages WHERE session_id=?", [req.session_id]
+        ).fetchone()[0]
+        is_first_message = (message_count == 0)
+
+    async def generate_stream():
+        """Generator function that yields SSE events."""
+        import app as app_module
+        from langchain_core.messages import AIMessageChunk
+        
+        # Load session memory
+        memory = load_memory_from_db(req.session_id, req.data_path)
+        app_module.summary_memory = memory
+        
+        try:
+            app_module.set_runtime_project_data_dir(req.data_path)
+        except Exception:
+            pass
+
+        # Add current user message to memory
+        user_msg = HumanMessage(content=req.message)
+        memory.chat_memory.add_user_message(req.message)
+
+        # Prepare conversation state for LangGraph
+        conversation_state = {"messages": [user_msg]}
+        full_response = ""
+        visualization_spec = None
+        
+        try:
+            # Use astream_events for token-level streaming
+            async for event in app_module.app.astream_events(
+                conversation_state, 
+                {"recursion_limit": 50},
+                version="v2"
+            ):
+                kind = event.get("event", "")
+                name = event.get("name", "")
+                
+                # Stream tokens from the LLM
+                if kind == "on_chat_model_stream":
+                    chunk = event.get("data", {}).get("chunk")
+                    if chunk and hasattr(chunk, "content") and chunk.content:
+                        token = chunk.content
+                        full_response += token
+                        # Send token as SSE event
+                        yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+                        await asyncio.sleep(0)  # Allow other tasks to run
+                
+                # Capture tool output from chain end events
+                elif kind == "on_chain_end" and name == "call_tool":
+                    # Tool node completed - check for visualization_spec in messages
+                    output = event.get("data", {}).get("output", {})
+                    messages = output.get("messages", []) if isinstance(output, dict) else []
+                    for msg in messages:
+                        msg_name = getattr(msg, "name", None)
+                        if msg_name == "visualization_spec":
+                            try:
+                                content = msg.content
+                                if isinstance(content, str):
+                                    visualization_spec = json.loads(content)
+                                elif isinstance(content, dict):
+                                    visualization_spec = content
+                            except Exception:
+                                pass
+                
+                # Also check on_tool_end as fallback
+                elif kind == "on_tool_end":
+                    tool_output = event.get("data", {}).get("output")
+                    tool_name = event.get("name", "")
+                    
+                    if tool_name == "visualization_spec" and tool_output:
+                        try:
+                            if isinstance(tool_output, str):
+                                visualization_spec = json.loads(tool_output)
+                            elif isinstance(tool_output, dict):
+                                visualization_spec = tool_output
+                        except Exception:
+                            pass
+                
+                # Send tool status updates
+                elif kind == "on_tool_start":
+                    tool_name = event.get("name", "")
+                    yield f"data: {json.dumps({'type': 'tool_start', 'tool': tool_name})}\n\n"
+                    await asyncio.sleep(0)
+
+            # Add AI response to memory
+            if full_response:
+                memory.chat_memory.add_ai_message(full_response)
+
+            # Save messages to DB
+            with duckdb.connect(chat_history_db_path(req.data_path)) as conn:
+                # Save user message
+                conn.execute(
+                    "INSERT INTO messages (session_id, role, content, visualization_spec) VALUES (?, ?, ?, NULL)",
+                    [req.session_id, "user", req.message]
+                )
+                # Save AI response with visualization spec
+                viz_spec_json = json.dumps(visualization_spec) if visualization_spec else None
+                conn.execute(
+                    "INSERT INTO messages (session_id, role, content, visualization_spec) VALUES (?, ?, ?, ?)",
+                    [req.session_id, "assistant", full_response, viz_spec_json]
+                )
+                
+                # Generate and save chat title if first message
+                if is_first_message:
+                    try:
+                        chat_title = generate_chat_title(req.message)
+                        conn.execute(
+                            "UPDATE sessions SET title=? WHERE id=?",
+                            [chat_title, req.session_id]
+                        )
+                    except Exception:
+                        pass
+                
+                # Update session summary
+                conn.execute(
+                    "UPDATE sessions SET summary=? WHERE id=?",
+                    [memory.moving_summary_buffer, req.session_id]
+                )
+
+            # Send final completion event with visualization spec if present
+            completion_data = {'type': 'done', 'session_id': req.session_id}
+            if visualization_spec:
+                completion_data['visualization_spec'] = visualization_spec
+            yield f"data: {json.dumps(completion_data)}\n\n"
+            
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(
+        generate_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
     )
 
 

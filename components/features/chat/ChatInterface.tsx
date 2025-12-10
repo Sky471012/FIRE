@@ -8,6 +8,7 @@ import {
 	Sparkles,
 	User,
 	Bot,
+	Wrench,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,6 +26,9 @@ export function ChatInterface() {
 		messages,
 		isLoading,
 		isSending,
+		isStreaming,
+		streamingContent,
+		currentTool,
 		sendMessage,
 		createSession,
 		error,
@@ -42,10 +46,10 @@ export function ChatInterface() {
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-	// Auto-scroll to bottom when new messages arrive
+	// Auto-scroll to bottom when new messages arrive or streaming content updates
 	useEffect(() => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-	}, [messages, isSending]);
+	}, [messages, isSending, streamingContent]);
 
 	const handleSend = async () => {
 		if (!inputMessage.trim() || isSending) return;
@@ -233,7 +237,42 @@ export function ChatInterface() {
 										)}
 									</div>
 								))}
-								{isSending && (
+								{/* Streaming message bubble - shows while AI is generating response */}
+								{isStreaming && (
+									<div className="flex gap-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+											<Bot className="h-4 w-4 text-primary" />
+										</div>
+										<div className="flex flex-col gap-2 max-w-[80%]">
+											<div className="rounded-2xl px-5 py-4 bg-card border border-border/50 shadow-sm">
+												{currentTool && (
+													<div className="flex items-center gap-2 text-xs text-muted-foreground mb-2 pb-2 border-b border-border/30">
+														<Wrench className="h-3 w-3 animate-pulse" />
+														<span>Using {currentTool}...</span>
+													</div>
+												)}
+												{streamingContent ? (
+													<div className="text-sm leading-relaxed text-foreground">
+														<MessageWithVisualization
+															content={streamingContent}
+															projectPath={currentProjectPath}
+															isUserMessage={false}
+														/>
+														{/* Blinking cursor */}
+														<span className="inline-block w-2 h-4 bg-primary/70 ml-0.5 animate-pulse" />
+													</div>
+												) : (
+													<div className="flex items-center gap-3 text-sm text-muted-foreground">
+														<Loader2 className="h-4 w-4 animate-spin text-primary" />
+														<span>Thinking...</span>
+													</div>
+												)}
+											</div>
+										</div>
+									</div>
+								)}
+								{/* Loading indicator when sending but not yet streaming */}
+								{isSending && !isStreaming && (
 									<div className="flex gap-4 animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
 										<div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
 											<Bot className="h-4 w-4 text-primary" />
