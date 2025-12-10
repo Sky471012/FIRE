@@ -64,7 +64,8 @@ def _quote_ident(name: str) -> str:
 # ===============================
 
 MODEL_NAME = "openai/gpt-oss-120b"
-chat_model = ChatGroq(temperature=0.7, model=MODEL_NAME, api_key=GROQ_API_KEY)
+# Enable streaming for token-by-token responses
+chat_model = ChatGroq(temperature=0.7, model=MODEL_NAME, api_key=GROQ_API_KEY, streaming=True)
 
 # --- Database Tool ---
 @tool("database_query_tool")
