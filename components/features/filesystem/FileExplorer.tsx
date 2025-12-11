@@ -85,6 +85,43 @@ export function FileExplorer() {
 		[],
 	);
 
+	// Helper to recursively load children for expanded folders
+	const loadExpandedChildren = useCallback(
+		async (
+			items: FileSystemEntry[],
+			expanded: Set<string>,
+		): Promise<FileSystemEntry[]> => {
+			const result: FileSystemEntry[] = [];
+
+			for (const item of items) {
+				if (item.is_directory && expanded.has(item.path)) {
+					try {
+						let children = await fileSystemApi.readDirectory(item.path);
+
+						if (!showHiddenFiles) {
+							children = children.filter(
+								(entry) => !entry.name.startsWith("."),
+							);
+						}
+
+						// Recursively load children of expanded subfolders
+						const loadedChildren = await loadExpandedChildren(children, expanded);
+
+						result.push({ ...item, children: loadedChildren });
+					} catch {
+						// If loading children fails, just add the item without children
+						result.push(item);
+					}
+				} else {
+					result.push(item);
+				}
+			}
+
+			return result;
+		},
+		[showHiddenFiles],
+	);
+
 	// Load directory contents
 	const loadDirectory = useCallback(
 		async (path: string) => {
@@ -96,7 +133,13 @@ export function FileExplorer() {
 					result = result.filter((entry) => !entry.name.startsWith("."));
 				}
 
-				setEntries(result);
+				// Load children for all expanded folders to preserve expansion state
+				const entriesWithChildren = await loadExpandedChildren(
+					result,
+					expandedFolders,
+				);
+
+				setEntries(entriesWithChildren);
 			} catch (error) {
 				toast.error(`Failed to load directory: ${error}`);
 				setEntries([]);
@@ -104,7 +147,7 @@ export function FileExplorer() {
 				setLoading(false);
 			}
 		},
-		[showHiddenFiles],
+		[showHiddenFiles, expandedFolders, loadExpandedChildren],
 	);
 
 	// Use extracted handlers
