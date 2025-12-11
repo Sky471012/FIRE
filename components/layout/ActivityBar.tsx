@@ -16,6 +16,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useLayout } from "@/hooks/use-layout";
+import { useSidebar } from "@/hooks/use-sidebar";
 import { usePythonServer } from "@/hooks/use-python-server";
 import { useTabs } from "@/hooks/use-tabs";
 import { useProject } from "@/hooks/use-project";
@@ -25,6 +26,7 @@ import { createChildWindow } from "@/lib/window";
 
 export function ActivityBar() {
 	const { activeView, setActiveView } = useLayout();
+	const { isLeftSidebarOpen, setLeftOpen } = useSidebar();
 	const { isRunning, isLoading, toggleServer } = usePythonServer();
     const { addTab } = useTabs();
     const { currentProjectPath } = useProject();
@@ -38,7 +40,14 @@ export function ActivityBar() {
 	];
 
 	const handleViewClick = (viewId: string) => {
+		// Single click: only switch to view, don't change sidebar state
 		setActiveView(viewId);
+	};
+
+	const handleViewDoubleClick = (viewId: string) => {
+		// Double click: toggle sidebar visibility
+		setActiveView(viewId);
+		setLeftOpen(!isLeftSidebarOpen);
 	};
 
     const handleNewCanvas = async () => {
@@ -103,6 +112,7 @@ export function ActivityBar() {
 							<button
 								type="button"
 								onClick={() => handleViewClick(button.id)}
+								onDoubleClick={() => handleViewDoubleClick(button.id)}
 								className={cn(
 									"h-12 w-full flex items-center justify-center transition-colors relative",
 									"hover:bg-accent",
