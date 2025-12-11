@@ -57,7 +57,7 @@ export function ActivityBar() {
             // Converting spaces to underscores usually safer.
             const fileName = `Untitled_${Date.now()}.fire`;
             
-            const pipelinePath = `${currentProjectPath}\\Pipelines`;
+            const pipelinePath = `${currentProjectPath}/Pipelines`;
             
             // Ensure Pipelines directory exists
             try {
@@ -67,11 +67,14 @@ export function ActivityBar() {
                 try {
                     await fileSystemApi.createFolder(currentProjectPath, "Pipelines");
                 } catch (createError) {
-                    console.error("Failed to create Pipelines folder:", createError);
+                    // Ignore if folder already exists, otherwise log error
+                    if (!String(createError).includes("already exists")) {
+                        console.error("Failed to create Pipelines folder:", createError);
+                    }
                 }
             }
             
-            // Create file
+            // Create file in the Pipelines directory
             const fullPath = await fileSystemApi.createFile(pipelinePath, fileName);
             
             // Write default content

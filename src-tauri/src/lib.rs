@@ -113,23 +113,35 @@ pub fn run() {
                     global_settings.get_window_state("main")
                 };
 
-                // Apply window position and size
-                let _ = main_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
-                    width: window_state.width as u32,
-                    height: window_state.height as u32,
-                }));
-
-                let _ =
-                    main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
-                        x: window_state.pos_x,
-                        y: window_state.pos_y,
-                    }));
-
-                // Apply maximized state if present
+                // Apply maximized state first if present
                 if let Some(maximized) = window_state.maximized {
                     if maximized {
                         let _ = main_window.maximize();
+                    } else {
+                        // Only set size and position if not maximized
+                        let _ = main_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                            width: window_state.width as u32,
+                            height: window_state.height as u32,
+                        }));
+
+                        let _ =
+                            main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                                x: window_state.pos_x,
+                                y: window_state.pos_y,
+                            }));
                     }
+                } else {
+                    // No maximized state, just set size and position
+                    let _ = main_window.set_size(tauri::Size::Physical(tauri::PhysicalSize {
+                        width: window_state.width as u32,
+                        height: window_state.height as u32,
+                    }));
+
+                    let _ =
+                        main_window.set_position(tauri::Position::Physical(tauri::PhysicalPosition {
+                            x: window_state.pos_x,
+                            y: window_state.pos_y,
+                        }));
                 }
 
                 // Show window after applying settings
