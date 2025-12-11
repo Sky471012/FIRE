@@ -9,7 +9,7 @@ export function CTASection() {
     <section className="relative overflow-hidden py-24 sm:py-32">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10" />
-      
+
       <div className="container relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -19,12 +19,14 @@ export function CTASection() {
           className="mx-auto max-w-3xl text-center"
         >
           <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">
-            Ready to Transform Your <span className="text-gradient">Research Workflow</span>?
+            Ready to Transform Your{" "}
+            <span className="text-gradient">Research Workflow</span>?
           </h2>
           <p className="mt-6 text-lg text-muted-foreground sm:text-xl">
-            Join researchers worldwide who are accelerating their scientific discovery with FIRE's AI-powered environment.
+            Join researchers worldwide who are accelerating their scientific
+            discovery with FIRE's AI-powered environment.
           </p>
-          
+
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
               href="https://gitlab.com/DilicalFlame/FIRE"
@@ -40,7 +42,7 @@ export function CTASection() {
               View Documentation
             </Link>
           </div>
-          
+
           <p className="mt-8 text-sm text-muted-foreground">
             Free and open source. MIT License.
           </p>

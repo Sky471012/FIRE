@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  transpilePackages: ['three'],
+  transpilePackages: ["three"],
 };
 
 export default nextConfig;

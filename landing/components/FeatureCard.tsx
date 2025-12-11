@@ -10,7 +10,11 @@ interface FeatureCardProps {
   imageSrc: string;
 }
 
-export function FeatureCard({ title, description, imageSrc }: FeatureCardProps) {
+export function FeatureCard({
+  title,
+  description,
+  imageSrc,
+}: FeatureCardProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const x = useMotionValue(0);
@@ -19,8 +23,16 @@ export function FeatureCard({ title, description, imageSrc }: FeatureCardProps) 
   const mouseXSpring = useSpring(x);
   const mouseYSpring = useSpring(y);
 
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["17.5deg", "-17.5deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-17.5deg", "17.5deg"]);
+  const rotateX = useTransform(
+    mouseYSpring,
+    [-0.5, 0.5],
+    ["17.5deg", "-17.5deg"],
+  );
+  const rotateY = useTransform(
+    mouseXSpring,
+    [-0.5, 0.5],
+    ["-17.5deg", "17.5deg"],
+  );
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = ref.current?.getBoundingClientRect();
@@ -65,16 +77,20 @@ export function FeatureCard({ title, description, imageSrc }: FeatureCardProps) 
         className="absolute inset-4 grid place-content-center rounded-xl bg-black shadow-lg"
       >
         <div className="relative h-full w-full overflow-hidden rounded-xl">
-            <Image
-                src={imageSrc}
-                alt={title}
-                fill
-                className="object-cover opacity-80 transition-opacity hover:opacity-100"
-            />
-             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
-                <h3 className="text-xl font-bold text-white translate-z-10">{title}</h3>
-                <p className="text-sm text-gray-300 translate-z-10">{description}</p>
-             </div>
+          <Image
+            src={imageSrc}
+            alt={title}
+            fill
+            className="object-cover opacity-80 transition-opacity hover:opacity-100"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent p-6 flex flex-col justify-end">
+            <h3 className="text-xl font-bold text-white translate-z-10">
+              {title}
+            </h3>
+            <p className="text-sm text-gray-300 translate-z-10">
+              {description}
+            </p>
+          </div>
         </div>
       </div>
     </motion.div>

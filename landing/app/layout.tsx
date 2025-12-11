@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FIRE - Fast Integrated Research Environment",
-  description: "A local-first, AI-powered workspace that unifies scientific data ingestion, analysis, and visualization.",
+  description:
+    "A local-first, AI-powered workspace that unifies scientific data ingestion, analysis, and visualization.",
 };
 
 export default function RootLayout({

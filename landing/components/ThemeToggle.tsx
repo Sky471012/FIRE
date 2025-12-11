@@ -12,7 +12,10 @@ export function ThemeToggle() {
     const savedTheme = localStorage.getItem("theme") as "dark" | "light" | null;
     const initialTheme = savedTheme || "dark";
     setTheme(initialTheme);
-    document.documentElement.classList.toggle("light", initialTheme === "light");
+    document.documentElement.classList.toggle(
+      "light",
+      initialTheme === "light",
+    );
   }, []);
 
   const toggleTheme = () => {

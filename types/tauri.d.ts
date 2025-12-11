@@ -1,7 +1,7 @@
 declare global {
-	interface Window {
-		isTauri: boolean;
-	}
+    interface Window {
+        isTauri: boolean;
+    }
 }
 
 export {};

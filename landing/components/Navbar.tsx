@@ -15,15 +15,27 @@ export function Navbar() {
     >
       <div className="container flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <Image src="/images/icon.png" alt="FIRE Logo" width={32} height={32} className="rounded-lg" />
+          <Image
+            src="/images/icon.png"
+            alt="FIRE Logo"
+            width={32}
+            height={32}
+            className="rounded-lg"
+          />
           <span className="text-xl font-bold tracking-tight">FIRE</span>
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          <Link href="#features" className="text-sm text-muted-foreground transition-colors hover:text-white">
+          <Link
+            href="#features"
+            className="text-sm text-muted-foreground transition-colors hover:text-white"
+          >
             Features
           </Link>
-          <Link href="#docs" className="text-sm text-muted-foreground transition-colors hover:text-white">
+          <Link
+            href="#docs"
+            className="text-sm text-muted-foreground transition-colors hover:text-white"
+          >
             Documentation
           </Link>
           <Link

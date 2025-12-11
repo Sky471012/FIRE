@@ -31,18 +31,22 @@ export function ParallaxShowcase() {
       tl.to(image2Ref.current, { y: -50 }, 0);
       tl.to(image3Ref.current, { y: -200 }, 0);
     },
-    { scope: container }
+    { scope: container },
   );
 
   return (
-    <section ref={container} className="relative min-h-screen overflow-hidden py-32">
+    <section
+      ref={container}
+      className="relative min-h-screen overflow-hidden py-32"
+    >
       <div className="container relative z-10">
         <div ref={textRef} className="mb-24 text-center">
           <h2 className="text-4xl font-bold tracking-tight sm:text-6xl">
             From Data to <span className="text-gradient">Insight</span>
           </h2>
           <p className="mt-6 text-xl text-muted-foreground">
-            Experience the flow of scientific discovery with FIRE's integrated environment.
+            Experience the flow of scientific discovery with FIRE's integrated
+            environment.
           </p>
         </div>
 
@@ -53,7 +57,7 @@ export function ParallaxShowcase() {
             className="absolute left-0 top-20 w-2/3 max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-black/50 shadow-2xl backdrop-blur-sm md:left-10"
           >
             <div className="relative aspect-video w-full">
-               <Image
+              <Image
                 src="/images/architecture.png"
                 alt="System Architecture"
                 fill
@@ -68,7 +72,7 @@ export function ParallaxShowcase() {
             className="absolute right-0 top-60 w-2/3 max-w-2xl overflow-hidden rounded-xl border border-white/10 bg-black/50 shadow-2xl backdrop-blur-sm md:right-10"
           >
             <div className="relative aspect-video w-full">
-               <Image
+              <Image
                 src="/images/user-flow.png"
                 alt="User Flow"
                 fill
@@ -83,7 +87,7 @@ export function ParallaxShowcase() {
             className="absolute bottom-0 left-1/2 w-2/3 max-w-3xl -translate-x-1/2 overflow-hidden rounded-xl border border-white/10 bg-black/50 shadow-2xl backdrop-blur-sm"
           >
             <div className="relative aspect-video w-full">
-               <Image
+              <Image
                 src="/images/3d-globe.png"
                 alt="3D Globe Visualization"
                 fill

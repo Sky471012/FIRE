@@ -11,7 +11,12 @@ interface FeatureShowcaseProps {
   index: number;
 }
 
-export function FeatureShowcase({ title, description, imageSrc, index }: FeatureShowcaseProps) {
+export function FeatureShowcase({
+  title,
+  description,
+  imageSrc,
+  index,
+}: FeatureShowcaseProps) {
   const isEven = index % 2 === 0;
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -42,7 +47,9 @@ export function FeatureShowcase({ title, description, imageSrc, index }: Feature
   const boxDepth = 40; // Depth of the 3D box in pixels
 
   return (
-    <div className={`flex flex-col gap-12 lg:flex-row lg:items-center ${isEven ? "" : "lg:flex-row-reverse"}`}>
+    <div
+      className={`flex flex-col gap-12 lg:flex-row lg:items-center ${isEven ? "" : "lg:flex-row-reverse"}`}
+    >
       {/* Text Content */}
       <motion.div
         initial={{ opacity: 0, x: isEven ? -50 : 50 }}
@@ -83,8 +90,8 @@ export function FeatureShowcase({ title, description, imageSrc, index }: Feature
             className="relative w-full"
             style={{
               transformStyle: "preserve-3d",
-              transform: isEven 
-                ? `rotateX(-12deg) rotateY(-25deg)` 
+              transform: isEven
+                ? `rotateX(-12deg) rotateY(-25deg)`
                 : `rotateX(-12deg) rotateY(25deg)`,
               transition: "transform 0.3s ease",
             }}
@@ -122,7 +129,7 @@ export function FeatureShowcase({ title, description, imageSrc, index }: Feature
               style={{
                 transformStyle: "preserve-3d",
                 width: `${boxDepth}px`,
-                transform: isEven 
+                transform: isEven
                   ? `rotateY(90deg) translateZ(calc(100% - ${boxDepth / 2}px))`
                   : `rotateY(-90deg) translateZ(${boxDepth / 2}px)`,
                 transformOrigin: isEven ? "right" : "left",
@@ -135,7 +142,7 @@ export function FeatureShowcase({ title, description, imageSrc, index }: Feature
               style={{
                 transformStyle: "preserve-3d",
                 width: `${boxDepth}px`,
-                transform: isEven 
+                transform: isEven
                   ? `rotateY(-90deg) translateZ(${boxDepth / 2}px)`
                   : `rotateY(90deg) translateZ(calc(100% - ${boxDepth / 2}px))`,
                 transformOrigin: isEven ? "left" : "right",

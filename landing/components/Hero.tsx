@@ -12,14 +12,17 @@ export function Hero() {
 
   useEffect(() => {
     const checkTheme = () => {
-      const isLight = document.documentElement.classList.contains('light');
+      const isLight = document.documentElement.classList.contains("light");
       setIsDark(!isLight);
     };
-    
+
     checkTheme();
     const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     return () => observer.disconnect();
   }, []);
 
@@ -32,7 +35,7 @@ export function Hero() {
       ) : (
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-blue-50/50 via-purple-50/30 to-pink-50/50" />
       )}
-      
+
       <div className="container relative z-10 flex flex-col items-center gap-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -60,7 +63,8 @@ export function Hero() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="max-w-2xl text-lg text-muted-foreground sm:text-xl"
         >
-          A local-first, AI-powered workspace that unifies scientific data ingestion, analysis, and visualization into a single conversation.
+          A local-first, AI-powered workspace that unifies scientific data
+          ingestion, analysis, and visualization into a single conversation.
         </motion.p>
 
         <motion.div
@@ -92,7 +96,11 @@ export function Hero() {
         >
           <div className="relative aspect-video w-full">
             <Image
-              src={isDark ? "/images/homescreen-dark.png" : "/images/homescreen-light.png"}
+              src={
+                isDark
+                  ? "/images/homescreen-dark.png"
+                  : "/images/homescreen-light.png"
+              }
               alt="FIRE Application Interface"
               fill
               className="object-cover"

@@ -10,74 +10,74 @@ import type { GlobalSettings, WindowState } from "@/types/window-state";
  * Example 1: Get window state for current window
  */
 export async function getMyWindowState() {
-	const currentWindow = getCurrentWindow();
-	const label = currentWindow.label;
+    const currentWindow = getCurrentWindow();
+    const label = currentWindow.label;
 
-	const state = await invoke<WindowState>("get_window_state", { label });
-	console.log("Current window state:", state);
+    const state = await invoke<WindowState>("get_window_state", { label });
+    console.log("Current window state:", state);
 
-	return state;
+    return state;
 }
 
 /**
  * Example 2: Manually save window state
  */
 export async function saveMyWindowState(newState: Partial<WindowState>) {
-	const currentWindow = getCurrentWindow();
-	const label = currentWindow.label;
+    const currentWindow = getCurrentWindow();
+    const label = currentWindow.label;
 
-	// Get current state first
-	const currentState = await invoke<WindowState>("get_window_state", { label });
+    // Get current state first
+    const currentState = await invoke<WindowState>("get_window_state", { label });
 
-	// Merge with new state
-	const updatedState: WindowState = {
-		...currentState,
-		...newState,
-	};
+    // Merge with new state
+    const updatedState: WindowState = {
+        ...currentState,
+        ...newState,
+    };
 
-	await invoke("save_window_state", {
-		label,
-		windowState: updatedState,
-	});
+    await invoke("save_window_state", {
+        label,
+        windowState: updatedState,
+    });
 
-	console.log("Saved window state:", updatedState);
+    console.log("Saved window state:", updatedState);
 }
 
 /**
  * Example 3: Get all window states
  */
 export async function getAllWindowStates() {
-	const settings = await invoke<GlobalSettings>("get_global_settings");
-	console.log("All window states:", settings);
+    const settings = await invoke<GlobalSettings>("get_global_settings");
+    console.log("All window states:", settings);
 
-	return settings;
+    return settings;
 }
 
 /**
  * Example 4: Change theme for current window
  */
 export async function changeWindowTheme(theme: "light" | "dark" | "system") {
-	await saveMyWindowState({ theme });
+    await saveMyWindowState({ theme });
 }
 
 /**
  * Example 5: Reset window to default position
  */
 export async function resetWindowPosition() {
-	await saveMyWindowState({
-		width: 800,
-		height: 600,
-		pos_x: 100,
-		pos_y: 100,
-	});
+    await saveMyWindowState({
+        width: 800,
+        height: 600,
+        pos_x: 100,
+        pos_y: 100,
+    });
 }
 
 /**
  * Example 6: Clean up window state when closing
  */
 export async function cleanupWindowState(label: string) {
-	await invoke("remove_window_state", { label });
-	console.log(`Removed window state for: ${label}`);
+    await invoke("remove_window_state", { label });
+    console.log(`Removed window state for: ${label}`);
 }
 
 /**
@@ -113,21 +113,21 @@ export function MyComponent() {
  * Example 8: Monitor window state changes
  */
 export async function monitorWindowChanges() {
-	const window = getCurrentWindow();
+    const window = getCurrentWindow();
 
-	// Listen to resize
-	const unlistenResize = await window.onResized((event) => {
-		console.log("Window resized:", event.payload);
-	});
+    // Listen to resize
+    const unlistenResize = await window.onResized((event) => {
+        console.log("Window resized:", event.payload);
+    });
 
-	// Listen to move
-	const unlistenMove = await window.onMoved((event) => {
-		console.log("Window moved:", event.payload);
-	});
+    // Listen to move
+    const unlistenMove = await window.onMoved((event) => {
+        console.log("Window moved:", event.payload);
+    });
 
-	// Cleanup function
-	return () => {
-		unlistenResize();
-		unlistenMove();
-	};
+    // Cleanup function
+    return () => {
+        unlistenResize();
+        unlistenMove();
+    };
 }

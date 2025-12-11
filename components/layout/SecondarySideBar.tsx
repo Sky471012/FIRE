@@ -7,9 +7,9 @@ export function SecondarySideBar() {
     const { tabs, activeTabId } = useTabs();
     const activeTab = tabs.find((t) => t.id === activeTabId);
 
-	if (activeTab?.type === "flux") {
-		return <FluxNodePalette />;
-	}
+    if (activeTab?.type === "flux") {
+        return <FluxNodePalette />;
+    }
 
-	return null;
+    return null;
 }

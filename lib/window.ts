@@ -10,25 +10,25 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 // Re-export types
 export type {
-	GlobalSettings,
-	WindowLabel,
-	WindowState,
+    GlobalSettings,
+    WindowLabel,
+    WindowState,
 } from "@/types/window-state";
 export { WINDOW_LABELS } from "@/types/window-state";
 
 export interface ChildWindowOptions {
-	/** Unique identifier for the window */
-	label: string;
-	/** Window title */
-	title: string;
-	/** URL to load in the window (dev: http://localhost:3000/path, prod: /path) */
-	url: string;
-	/** Window width in pixels */
-	width?: number;
-	/** Window height in pixels */
-	height?: number;
-	/** Parent window label (defaults to current window) */
-	parentLabel?: string;
+    /** Unique identifier for the window */
+    label: string;
+    /** Window title */
+    title: string;
+    /** URL to load in the window (dev: http://localhost:3000/path, prod: /path) */
+    url: string;
+    /** Window width in pixels */
+    width?: number;
+    /** Window height in pixels */
+    height?: number;
+    /** Parent window label (defaults to current window) */
+    parentLabel?: string;
 }
 
 /**
@@ -55,29 +55,27 @@ export interface ChildWindowOptions {
  * });
  * ```
  */
-export async function createChildWindow(
-	options: ChildWindowOptions,
-): Promise<void> {
-	const { label, title, url, width = 600, height = 400, parentLabel } = options;
+export async function createChildWindow(options: ChildWindowOptions): Promise<void> {
+    const { label, title, url, width = 600, height = 400, parentLabel } = options;
 
-	const parent = parentLabel || getCurrentWindow().label;
+    const parent = parentLabel || getCurrentWindow().label;
 
-	// Determine the full URL based on environment
-	const isDev = process.env.NODE_ENV === "development";
-	const fullUrl = isDev
-		? `http://localhost:3000${url.startsWith("/") ? url : `/${url}`}`
-		: url.startsWith("/")
-			? url
-			: `/${url}`;
+    // Determine the full URL based on environment
+    const isDev = process.env.NODE_ENV === "development";
+    const fullUrl = isDev
+        ? `http://localhost:3000${url.startsWith("/") ? url : `/${url}`}`
+        : url.startsWith("/")
+          ? url
+          : `/${url}`;
 
-	await invoke("create_child_window", {
-		parentLabel: parent,
-		label,
-		title,
-		url: fullUrl,
-		width,
-		height,
-	});
+    await invoke("create_child_window", {
+        parentLabel: parent,
+        label,
+        title,
+        url: fullUrl,
+        width,
+        height,
+    });
 }
 
 /**
@@ -87,16 +85,13 @@ export async function createChildWindow(
  * @param parentLabel - The label of the parent window (defaults to current window)
  * @returns Promise that resolves when the window is closed
  */
-export async function closeChildWindow(
-	label: string,
-	parentLabel?: string,
-): Promise<void> {
-	const parent = parentLabel || getCurrentWindow().label;
+export async function closeChildWindow(label: string, parentLabel?: string): Promise<void> {
+    const parent = parentLabel || getCurrentWindow().label;
 
-	await invoke("close_child_window", {
-		parentLabel: parent,
-		label,
-	});
+    await invoke("close_child_window", {
+        parentLabel: parent,
+        label,
+    });
 }
 
 /**
@@ -106,7 +101,7 @@ export async function closeChildWindow(
  * @returns Promise that resolves to true if the window exists, false otherwise
  */
 export async function windowExists(label: string): Promise<boolean> {
-	return await invoke("window_exists", { label });
+    return await invoke("window_exists", { label });
 }
 
 /**
@@ -115,13 +110,13 @@ export async function windowExists(label: string): Promise<boolean> {
  * @returns Promise that resolves when the window is created
  */
 export async function openSettingsDialog(): Promise<void> {
-	return createChildWindow({
-		label: "settings",
-		title: "Settings",
-		url: "/settings",
-		width: 700,
-		height: 500,
-	});
+    return createChildWindow({
+        label: "settings",
+        title: "Settings",
+        url: "/settings",
+        width: 700,
+        height: 500,
+    });
 }
 
 /**
@@ -130,13 +125,13 @@ export async function openSettingsDialog(): Promise<void> {
  * @returns Promise that resolves when the window is created
  */
 export async function openPreferencesDialog(): Promise<void> {
-	return createChildWindow({
-		label: "preferences",
-		title: "Preferences",
-		url: "/preferences",
-		width: 600,
-		height: 450,
-	});
+    return createChildWindow({
+        label: "preferences",
+        title: "Preferences",
+        url: "/preferences",
+        width: 600,
+        height: 450,
+    });
 }
 
 /**
@@ -156,6 +151,6 @@ export async function openPreferencesDialog(): Promise<void> {
  * ```
  */
 export async function closeCurrentWindow(): Promise<void> {
-	const currentWindow = getCurrentWindow();
-	await currentWindow.close();
+    const currentWindow = getCurrentWindow();
+    await currentWindow.close();
 }

@@ -8,31 +8,27 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useWindowState } from "@/hooks/use-window-state";
 
 function DemoDialogContent({ children }: { children: React.ReactNode }) {
-	// Initialize window state management for demo-dialog window
-	useWindowState("demo-dialog");
+    // Initialize window state management for demo-dialog window
+    useWindowState("demo-dialog");
 
-	return <TooltipProvider>{children}</TooltipProvider>;
+    return <TooltipProvider>{children}</TooltipProvider>;
 }
 
-export default function DemoDialogLayout({
-	children,
-}: {
-	children: React.ReactNode;
-}) {
-	return (
-		<html lang="en" suppressHydrationWarning>
-			<body className="overflow-hidden">
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="dark"
-					enableSystem
-					disableTransitionOnChange
-				>
-					<ThemeSyncProvider>
-						<DemoDialogContent>{children}</DemoDialogContent>
-					</ThemeSyncProvider>
-				</ThemeProvider>
-			</body>
-		</html>
-	);
+export default function DemoDialogLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <html lang="en" suppressHydrationWarning>
+            <body className="overflow-hidden">
+                <ThemeProvider
+                    attribute="class"
+                    defaultTheme="dark"
+                    enableSystem
+                    disableTransitionOnChange
+                >
+                    <ThemeSyncProvider>
+                        <DemoDialogContent>{children}</DemoDialogContent>
+                    </ThemeSyncProvider>
+                </ThemeProvider>
+            </body>
+        </html>
+    );
 }

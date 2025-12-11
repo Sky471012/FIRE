@@ -82,27 +82,30 @@ const FragmentShader = `
 function GradientMesh() {
   const mesh = useRef<THREE.Mesh>(null);
   const [isDark, setIsDark] = useState(true);
-  
+
   const uniforms = useMemo(
     () => ({
       u_time: { value: 0 },
       u_mouse: { value: new THREE.Vector2(0.5, 0.5) },
       u_isDark: { value: 1.0 },
     }),
-    []
+    [],
   );
 
   useEffect(() => {
     const checkTheme = () => {
-      const isLight = document.documentElement.classList.contains('light');
+      const isLight = document.documentElement.classList.contains("light");
       setIsDark(!isLight);
       uniforms.u_isDark.value = isLight ? 0.0 : 1.0;
     };
-    
+
     checkTheme();
     const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     return () => observer.disconnect();
   }, [uniforms]);
 
@@ -112,9 +115,9 @@ function GradientMesh() {
       uniforms.u_mouse.value.lerp(
         new THREE.Vector2(
           state.pointer.x * 0.5 + 0.5,
-          state.pointer.y * 0.5 + 0.5
+          state.pointer.y * 0.5 + 0.5,
         ),
-        0.1
+        0.1,
       );
     }
   });
